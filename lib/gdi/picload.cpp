@@ -4,7 +4,10 @@
 
 #include <lib/gdi/picload.h>
 #include <lib/gdi/picexif.h>
-#include "../../../misc/tools/libmmeimage/libmmeimage.h"
+
+#if defined(__sh__)
+#include <mmeimage/libmmeimage.h>
+#endif
 
 extern "C" {
 #include <jpeglib.h>
