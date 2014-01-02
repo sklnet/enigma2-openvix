@@ -171,8 +171,6 @@ int gAccel::blit(gUnmanagedSurface *dst, gUnmanagedSurface *src, const eRect &p,
 {
 #ifdef STMFB_ACCEL
 	int src_format = 0;
-	void *data = 0;
-	int data_phys = 0;
 	gUnmanagedSurface* tmp = new gUnmanagedSurface(area.height(),area.width(),32);
 
 	if (src->bpp == 32)
