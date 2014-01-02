@@ -92,7 +92,24 @@ eServiceFactoryMP3::eServiceFactoryMP3()
 		extensions.push_back("3gp");
 		extensions.push_back("3g2");
 		extensions.push_back("asf");
-		extensions.push_back("wmv");
+#if defined(__sh__)
+		extensions.push_back("mpeg");
+		extensions.push_back("m2ts");
+		extensions.push_back("trp");
+		extensions.push_back("vdr");
+		extensions.push_back("mts");
+		extensions.push_back("rar");
+		extensions.push_back("img");
+		extensions.push_back("iso");
+		extensions.push_back("ifo");
+		int fd = open("/proc/stb/info/model", O_RDONLY);
+		char tmp[255];
+		int rd = fd >= 0 ? read(fd, tmp, 255) : 0;
+		if (fd >= 0)
+			close(fd);
+		if (!strncmp(tmp, "ufs912\n", rd) || !strncmp(tmp, "ufs913\n", rd) || !strncmp(tmp, "atevio7500\n", rd) || !strncmp(tmp, "hs7110\n", rd) || !strncmp(tmp, "hs7810a\n", rd) || !strncmp(tmp, "spark7162\n", rd) || !strncmp(tmp, "whitebox\n", rd))
+			extensions.push_back("wmv");
+#endif
 		extensions.push_back("wma");
 		sc->addServiceFactory(eServiceFactoryMP3::id, this, extensions);
 	}
