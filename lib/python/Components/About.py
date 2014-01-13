@@ -28,6 +28,7 @@ def getChipSetString():
 
 def getCPUString():
 	try:
+		system="unknown"
 		file = open('/proc/cpuinfo', 'r')
 		lines = file.readlines()
 		for x in lines:
@@ -43,6 +44,7 @@ def getCPUString():
 
 def getCpuCoresString():
 	try:
+                cores=1
 		file = open('/proc/cpuinfo', 'r')
 		lines = file.readlines()
 		for x in lines:
