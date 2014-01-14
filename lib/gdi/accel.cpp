@@ -170,19 +170,26 @@ bool gAccel::hasAlphaBlendingSupport()
 int gAccel::blit(gUnmanagedSurface *dst, gUnmanagedSurface *src, const eRect &p, const eRect &area, int flags)
 {
 #ifdef STMFB_ACCEL
+	//eDebug( "src: %4d %4d %4d %4d\tdst: %4d %4d %4d %4d\n"
+	//		"area: %4d %4d %4d %4d\tp: %4d %4d %4d %4d\n",
+	//		src->data_phys, src->x, src->y, src->stride,
+	//		dst->data_phys, dst->x, dst->y, dst->stride, 
+	//		area.left(), area.top(), area.width(), area.height(),
+	//		p.x(), p.y(), p.width(), p.height());
+
 	int src_format = 0;
-	gUnmanagedSurface* tmp = new gUnmanagedSurface(area.height(),area.width(),32);
+	gUnmanagedSurface *surfaceTmp = new gUnmanagedSurface(area.width(), area.height(), dst->bpp);
 
 	if (src->bpp == 32)
 		src_format = 0;
 	else if ((src->bpp == 8) && (dst->bpp == 32))
 	{
 		src_format = 1;
-		if (accelAlloc(tmp))
+		if (accelAlloc(surfaceTmp))
 			return -1;
 
 		__u8 *srcptr=(__u8*)src->data;
-		__u8 *dstptr=(__u8*)tmp->data;
+		__u8 *dstptr=(__u8*)surfaceTmp->data;
 		__u32 pal[256];
 
 		for (int i=0; i<256; ++i)
@@ -210,19 +217,19 @@ int gAccel::blit(gUnmanagedSurface *dst, gUnmanagedSurface *src, const eRect &p,
 			dstptr+=area.width() * 4;
 		}
 	} else {
-		if (tmp->data_phys)
-			accelFree(tmp);
+		if (surfaceTmp->data_phys)
+			accelFree(surfaceTmp);
 		return -1;
 	}
 
-	if (tmp->data_phys)
+	if (surfaceTmp->data_phys)
 	{
 		stmfb_accel_blit(
-			tmp->data_phys, 0, 0, area.width() * 4, src_format,
+			surfaceTmp->data_phys, 0, 0, area.width() * 4, src_format,
 			dst->data_phys, dst->x, dst->y, dst->stride,
 			0, 0, area.width(), area.height(),
 			p.x(), p.y(), p.width(), p.height());
-		accelFree(tmp);
+		accelFree(surfaceTmp);
 	} else {
 		stmfb_accel_blit(
 			src->data_phys, src->x, src->y, src->stride, src_format,

@@ -65,7 +65,7 @@ int eDVBAudio::startPid(int pid, int type)
 #if defined(__sh__) // increases zapping speed
 		pes.flags    = DMX_IMMEDIATE_START;
 #else
- 		pes.flags    = 0;
+	 	pes.flags    = 0;
 #endif
 		eDebugNoNewLine("DMX_SET_PES_FILTER(0x%02x) - audio - ", pid);
 		if (::ioctl(m_fd_demux, DMX_SET_PES_FILTER, &pes) < 0)
@@ -122,7 +122,7 @@ int eDVBAudio::startPid(int pid, int type)
 			eDebug("failed (%m)");
 		else
 			eDebug("ok");
-#if not defined(__sh__)
+#if not defined(__sh__) // this is a hack which only matters for dm drivers
 		freeze();  // why freeze here?!? this is a problem when only a pid change is requested... because of the unfreeze logic in Decoder::setState
 #endif
 		eDebugNoNewLine("AUDIO_PLAY - ");
@@ -347,7 +347,7 @@ int eDVBVideo::startPid(int pid, int type)
 #if defined(__sh__) // increases zapping speed
 		pes.flags    = DMX_IMMEDIATE_START;
 #else
- 		pes.flags    = 0;
+		pes.flags    = 0;
 #endif
 		eDebugNoNewLine("DMX_SET_PES_FILTER(0x%02x) - video - ", pid);
 		if (::ioctl(m_fd_demux, DMX_SET_PES_FILTER, &pes) < 0)
@@ -659,7 +659,7 @@ int eDVBPCR::startPid(int pid)
 #if defined(__sh__) // increases zapping speed
 	pes.flags    = DMX_IMMEDIATE_START;
 #else
- 	pes.flags    = 0;
+	pes.flags    = 0;
 #endif
 	eDebugNoNewLine("DMX_SET_PES_FILTER(0x%02x) - pcr - ", pid);
 	if (::ioctl(m_fd_demux, DMX_SET_PES_FILTER, &pes) < 0)

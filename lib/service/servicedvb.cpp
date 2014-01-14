@@ -30,7 +30,6 @@
 
 #include <iostream>
 #include <fstream>
-#include <cmath>
 using namespace std;
 
 #ifndef BYTE_ORDER
