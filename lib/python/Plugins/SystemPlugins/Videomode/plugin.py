@@ -77,6 +77,10 @@ class VideoSetup(Screen, ConfigListScreen):
 			else:
 				self.list.append(getConfigListEntry(_("Refresh rate"), config.av.videorate[config.av.videomode[config.av.videoport.getValue()].getValue()], _("Configure the refresh rate of the screen.")))
 
+#+++>
+		self.list.append(getConfigListEntry(_("3D Mode"), config.av.threedmode))
+#+++<
+
 		port = config.av.videoport.getValue()
 		if port not in config.av.videomode:
 			mode = None
@@ -99,6 +103,14 @@ class VideoSetup(Screen, ConfigListScreen):
 
 #		if config.av.videoport.getValue() == "DVI":
 #			self.list.append(getConfigListEntry(_("Allow unsupported modes"), config.av.edid_override))
+#+++>
+		if config.av.videoport.value == "Component":
+			self.list.append(getConfigListEntry(_("Color Format"), config.av.colorformat_yuv))
+
+		if config.av.videoport.value == "HDMI":
+			self.list.append(getConfigListEntry(_("Color Format"), config.av.colorformat_hdmi))
+			self.list.append(getConfigListEntry(_("Audio Source"), config.av.hdmi_audio_source))
+#+++<
 		if config.av.videoport.getValue() == "Scart":
 			self.list.append(getConfigListEntry(_("Color format"), config.av.colorformat, _("Configure which color format should be used on the SCART output.")))
 			if level >= 1:
