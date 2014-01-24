@@ -12,71 +12,108 @@ class AVSwitch:
 	rates = { } # high-level, use selectable modes.
 	modes = { }  # a list of (high-level) modes for a certain port.
 
-	rates["PAL"] =		{	"50Hz":		{ 50: "pal" },
-							"60Hz":		{ 60: "pal60" },
-							"multi":	{ 50: "pal", 60: "pal60" } }
+	if not about.getChipSetString() in ('7111', '7162'):
 
-	rates["NTSC"] =		{	"60Hz": 	{ 60: "ntsc" } }
+		rates["PAL"] =		{	"50Hz":		{ 50: "pal" },
+								"60Hz":		{ 60: "pal60" },
+								"multi":	{ 50: "pal", 60: "pal60" } }
 
-	rates["Multi"] =	{	"multi":	{ 50: "pal", 60: "ntsc" } }
+		rates["NTSC"] =		{	"60Hz": 	{ 60: "ntsc" } }
 
-	rates["480i"] =		{	"60Hz": 	{ 60: "480i" } }
+		rates["Multi"] =	{	"multi":	{ 50: "pal", 60: "ntsc" } }
 
-	rates["576i"] =		{	"50Hz": 	{ 50: "576i" } }
+		rates["480i"] =		{	"60Hz": 	{ 60: "480i" } }
 
-	rates["480p"] =		{	"60Hz": 	{ 60: "480p" } }
+		rates["576i"] =		{	"50Hz": 	{ 50: "576i" } }
 
-	rates["576p"] =		{	"50Hz": 	{ 50: "576p" } }
+		rates["480p"] =		{	"60Hz": 	{ 60: "480p" } }
 
-	rates["720p"] =		{	"50Hz": 	{ 50: "720p50" },
-							"60Hz": 	{ 60: "720p" },
-							"multi": 	{ 50: "720p50", 60: "720p" } }
+		rates["576p"] =		{	"50Hz": 	{ 50: "576p" } }
 
-	rates["1080i"] =	{	"50Hz":		{ 50: "1080i50" },
-							"60Hz":		{ 60: "1080i" },
-							"multi":	{ 50: "1080i50", 60: "1080i" } }
+		rates["720p"] =		{	"50Hz": 	{ 50: "720p50" },
+								"60Hz": 	{ 60: "720p" },
+								"multi": 	{ 50: "720p50", 60: "720p" } }
 
-	rates["1080p"] =	{ 	"50Hz":		{ 50: "1080p50" },
-							"60Hz":		{ 60: "1080p" },
-							"multi":	{ 50: "1080p50", 60: "1080p" } }
+		rates["1080i"] =	{	"50Hz":		{ 50: "1080i50" },
+								"60Hz":		{ 60: "1080i" },
+								"multi":	{ 50: "1080i50", 60: "1080i" } }
 
-	rates["PC"] = {
-		"1024x768": { 60: "1024x768" }, # not possible on DM7025
-		"800x600" : { 60: "800x600" },  # also not possible
-		"720x480" : { 60: "720x480" },
-		"720x576" : { 60: "720x576" },
-		"1280x720": { 60: "1280x720" },
-		"1280x720 multi": { 50: "1280x720_50", 60: "1280x720" },
-		"1920x1080": { 60: "1920x1080"},
-		"1920x1080 multi": { 50: "1920x1080", 60: "1920x1080_50" },
-		"1280x1024" : { 60: "1280x1024"},
-		"1366x768" : { 60: "1366x768"},
-		"1366x768 multi" : { 50: "1366x768", 60: "1366x768_50" },
-		"1280x768": { 60: "1280x768" },
-		"640x480" : { 60: "640x480" }
-	}
+		rates["1080p"] =	{ 	"50Hz":		{ 50: "1080p50" },
+								"60Hz":		{ 60: "1080p" },
+								"multi":	{ 50: "1080p50", 60: "1080p" } }
 
-	modes["Scart"] = ["PAL", "NTSC", "Multi"]
-	# modes["DVI-PC"] = ["PC"]
+		rates["PC"] = {
+			"1024x768": { 60: "1024x768" }, # not possible on DM7025
+			"800x600" : { 60: "800x600" },  # also not possible
+			"720x480" : { 60: "720x480" },
+			"720x576" : { 60: "720x576" },
+			"1280x720": { 60: "1280x720" },
+			"1280x720 multi": { 50: "1280x720_50", 60: "1280x720" },
+			"1920x1080": { 60: "1920x1080"},
+			"1920x1080 multi": { 50: "1920x1080", 60: "1920x1080_50" },
+			"1280x1024" : { 60: "1280x1024"},
+			"1366x768" : { 60: "1366x768"},
+			"1366x768 multi" : { 50: "1366x768", 60: "1366x768_50" },
+			"1280x768": { 60: "1280x768" },
+			"640x480" : { 60: "640x480" }
+		}
 
-	if about.getChipSetString() in ('7358', '7356', '7424'):
-		modes["HDMI"] = ["720p", "1080p", "1080i", "576p", "576i", "480p", "480i"]
-		widescreen_modes = set(["720p", "1080p", "1080i"])
+		modes["Scart"] = ["PAL", "NTSC", "Multi"]
+		# modes["DVI-PC"] = ["PC"]
+
+		if about.getChipSetString() in ('7358', '7356', '7424'):
+			modes["HDMI"] = ["720p", "1080p", "1080i", "576p", "576i", "480p", "480i"]
+			widescreen_modes = set(["720p", "1080p", "1080i"])
+		else:
+			modes["HDMI"] = ["720p", "1080i", "576p", "576i", "480p", "480i"]
+			widescreen_modes = set(["720p", "1080i"])
+
+		modes["YPbPr"] = modes["HDMI"]
+		if getBoxType().startswith('vu'):
+			modes["Scart-YPbPr"] = modes["HDMI"]
+
+		# if modes.has_key("DVI-PC") and not getModeList("DVI-PC"):
+		# 	print "remove DVI-PC because of not existing modes"
+		# 	del modes["DVI-PC"]
+		if modes.has_key("YPbPr") and getBoxType() in ('et4x00', 'xp1000', 'tm2t', 'tmsingle', 'odimm7', 'vusolo2', 'tmnano'):
+			del modes["YPbPr"]
+		if modes.has_key("Scart") and getBoxType() in ('gbquad', 'et5x00', 'ixussone', 'et6x00', 'tmnano'):
+			del modes["Scart"]
+
 	else:
-		modes["HDMI"] = ["720p", "1080i", "576p", "576i", "480p", "480i"]
-		widescreen_modes = set(["720p", "1080i"])
 
-	modes["YPbPr"] = modes["HDMI"]
-	if getBoxType().startswith('vu'):
-		modes["Scart-YPbPr"] = modes["HDMI"]
+		rates["PAL"] =			{ "50Hz":	{ 50: "pal" } }
+ 
+		rates["576i"] =			{ "50Hz":	{ 50: "576i50" } }
+ 
+		rates["576p"] =			{ "50Hz":	{ 50: "576p50" } }
+ 
+		rates["720p"] =			{ "50Hz":	{ 50: "720p50" },
+								"60Hz":	{ 60: "720p60" } }
+ 
+	 	rates["1080i"] =		{ "50Hz":	{ 50: "1080i50" },
+								"60Hz":	{ 60: "1080i60" } }
+ 
+		rates["1080p"] =		{ "23Hz":	{ 50: "1080p23" },
+								"24Hz":	{ 60: "1080p24" },
+								"25Hz":	{ 60: "1080p25" },
+								"29Hz":	{ 60: "1080p29" },
+								"30Hz":	{ 60: "1080p30" },
+								"50Hz":	{ 60: "1080p50" },
+								"60Hz":	{ 60: "1080p60" } }
 
-	# if modes.has_key("DVI-PC") and not getModeList("DVI-PC"):
-	# 	print "remove DVI-PC because of not existing modes"
-	# 	del modes["DVI-PC"]
-	if modes.has_key("YPbPr") and getBoxType() in ('et4x00', 'xp1000', 'tm2t', 'tmsingle', 'odimm7', 'vusolo2', 'tmnano'):
-		del modes["YPbPr"]
-	if modes.has_key("Scart") and getBoxType() in ('gbquad', 'et5x00', 'ixussone', 'et6x00', 'tmnano'):
-		del modes["Scart"]
+	 	rates["PC"] = {
+			"1024x768"  : { 60: "1024x768_60", 70: "1024x768_70", 75: "1024x768_75", 90: "1024x768_90", 100: "1024x768_100" }, #43 60 70 72 75 90 100
+			"1280x1024" : { 60: "1280x1024_60", 70: "1280x1024_70", 75: "1280x1024_75" }, #43 47 60 70 74 75
+			"1600x1200" : { 60: "1600x1200_60" }, #60 66 76
+ 		}
+
+		modes["Scart"] = ["PAL"]
+		modes["HDMI"] = ["720p", "1080p", "1080i", "576p", "576i"]
+		modes["YPbPr"] = modes["HDMI"]
+
+		widescreen_modes = set(["576i", "576p", "720p", "1080i", "1080p"])
+
 
 	def __init__(self):
 		self.last_modes_preferred =  [ ]
