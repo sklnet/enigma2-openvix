@@ -1,5 +1,4 @@
 from Tools.Profile import profile
-from Tools.BoundFunction import boundFunction
 
 # workaround for required config entry dependencies.
 import Screens.MovieSelection
@@ -11,6 +10,7 @@ from Components.Pixmap import MultiPixmap
 
 profile("LOAD:enigma")
 import enigma
+from boxbranding import getBrandOEM
 
 profile("LOAD:InfoBarGenerics")
 from Screens.InfoBarGenerics import InfoBarShowHide, \
@@ -124,10 +124,6 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 				if old_begin_time and old_begin_time != self.current_begin_time:
 					self.doShow()
 
-	def __checkServiceStarted(self):
-		self.__serviceStarted(True)
-		self.onExecBegin.remove(self.__checkServiceStarted)
-
 	def serviceStarted(self):  #override from InfoBarShowHide
 		new = self.servicelist.newServicePlayed()
 		if self.execing:
@@ -151,7 +147,7 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 			self.servicelist.showFavourites()
 
 	def TvRadioToggle(self):
-		if enigma.getBoxType().startswith('gb'):
+		if getBrandOEM() == 'gigablue':
 			self.toogleTvRadio()
 		else:
 			self.showTv()
@@ -204,9 +200,9 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 		else:
 			self.session.open(MoviePlayer, service, slist = self.servicelist, lastservice = ref)
 
-class MoviePlayer(InfoBarBase, InfoBarShowHide, \
-		InfoBarMenu, InfoBarEPG, \
-		InfoBarSeek, InfoBarShowMovies, InfoBarInstantRecord, InfoBarAudioSelection, HelpableScreen, InfoBarNotifications,
+class MoviePlayer(InfoBarBase, InfoBarShowHide,
+				  InfoBarMenu, InfoBarEPG,
+				  InfoBarSeek, InfoBarShowMovies, InfoBarInstantRecord, InfoBarAudioSelection, HelpableScreen, InfoBarNotifications,
 		InfoBarServiceNotifications, InfoBarPVRState, InfoBarCueSheetSupport,
 		InfoBarMoviePlayerSummarySupport, InfoBarSubtitleSupport, Screen, InfoBarTeletextPlugin,
 		InfoBarServiceErrorPopupSupport, InfoBarExtensions, InfoBarPlugins, InfoBarPiP, InfoBarZoom):
@@ -309,12 +305,12 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, \
 			self.leavePlayerOnExitCallback(True)
 
 	def leavePlayerOnExitCallback(self, answer):
-		if answer == True:
+		if answer:
 			setResumePoint(self.session)
 			self.handleLeave("quit")
 
 	def hidePipOnExitCallback(self, answer):
-		if answer == True:
+		if answer:
 			self.showPiP()
 
 	def deleteConfirmed(self, answer):
@@ -377,7 +373,7 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, \
 					self.leavePlayerConfirmed([True,"loop"])
 				else:
 					self.leavePlayerConfirmed([True,"quit"])
-		elif answer in ("repeatcurrent"):
+		elif answer in "repeatcurrent":
 			if config.usage.next_movie_msg.value:
 				(item, length) = self.getPlaylistServiceInfo(self.cur_service)
 				self.displayPlayedName(self.cur_service, item, length)
@@ -462,14 +458,23 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, \
 		if self.session.pipshown:
 			if slist and slist.dopipzap:
 				slist.togglePipzap()
-			del self.session.pip
-			self.session.pipshown = False
+			if self.session.pipshown:
+				del self.session.pip
+				self.session.pipshown = False
 		else:
 			from Screens.PictureInPicture import PictureInPicture
 			self.session.pip = self.session.instantiateDialog(PictureInPicture)
 			self.session.pip.show()
-			self.session.pipshown = True
-			self.session.pip.playService(slist.getCurrentSelection())
+			if self.session.pip.playService(slist.getCurrentSelection()):
+				self.session.pipshown = True
+				self.session.pip.servicePath = slist.getCurrentServicePath()
+			else:
+				self.session.pipshown = False
+				del self.session.pip
+
+	def movePiP(self):
+		if self.session.pipshown:
+			InfoBarPiP.movePiP(self)
 
 	def swapPiP(self):
 		pass
@@ -503,13 +508,13 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, \
 		for i, item in enumerate(playlist):
 			if item == service:
 				if config.usage.on_movie_eof.value == "repeatcurrent":
-					return (i+1, len(playlist))
+					return i+1, len(playlist)
 				i += 1
 				if i < len(playlist):
-					return (playlist[i], i+1, len(playlist))
+					return playlist[i], i+1, len(playlist)
 				elif config.usage.on_movie_eof.getValue() == "loop":
-					return (playlist[0], 1, len(playlist))
-		return ( None, 0, 0 )
+					return playlist[0], 1, len(playlist)
+		return None, 0, 0
 
 	def displayPlayedName(self, ref, index, n):
 		from Tools import Notifications

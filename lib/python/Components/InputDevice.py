@@ -1,9 +1,11 @@
-from config import config, ConfigSlider, ConfigSubsection, ConfigYesNo, ConfigText, ConfigInteger
 from os import listdir, open as os_open, close as os_close, write as os_write, O_RDWR, O_NONBLOCK
-from Tools.Directories import pathExists
 from fcntl import ioctl
-from enigma import getBoxType
+from boxbranding import getBoxType, getBrandOEM
 import struct
+
+from config import config, ConfigSubsection, ConfigInteger, ConfigYesNo, ConfigText, ConfigSlider
+from Tools.Directories import pathExists
+
 
 # asm-generic/ioctl.h
 IOC_NRBITS = 8L
@@ -99,7 +101,7 @@ class inputDevices:
 	#}; -> size = 16
 
 	def setDefaults(self, device):
-		print "[iInputDevices] setDefaults for device %s" % (device)
+		print "[iInputDevices] setDefaults for device %s" % device
 		self.setDeviceAttribute(device, 'configuredName', None)
 		event_repeat = struct.pack('iihhi', 0, 0, 0x14, 0x01, 100)
 		event_delay = struct.pack('iihhi', 0, 0, 0x14, 0x00, 700)
@@ -109,7 +111,7 @@ class inputDevices:
 		os_close(fd)
 
 	def setRepeat(self, device, value): #REP_PERIOD
-		if self.getDeviceAttribute(device, 'enabled') == True:
+		if self.getDeviceAttribute(device, 'enabled'):
 			print "[iInputDevices] setRepeat for device %s to %d ms" % (device,value)
 			event = struct.pack('iihhi', 0, 0, 0x14, 0x01, int(value))
 			fd = os_open("/dev/input/" + device, O_RDWR)
@@ -117,7 +119,7 @@ class inputDevices:
 			os_close(fd)
 
 	def setDelay(self, device, value): #REP_DELAY
-		if self.getDeviceAttribute(device, 'enabled') == True:
+		if self.getDeviceAttribute(device, 'enabled'):
 			print "[iInputDevices] setDelay for device %s to %d ms" % (device,value)
 			event = struct.pack('iihhi', 0, 0, 0x14, 0x00, int(value))
 			fd = os_open("/dev/input/" + device, O_RDWR)
@@ -152,9 +154,9 @@ class InitInputDevices:
 				devname = iInputDevices.getDeviceAttribute(self.currentDevice, 'name')
 				if devname != configElement.value:
 					cmd = "config.inputDevices." + self.currentDevice + ".enabled.value = False"
-					exec (cmd)
+					exec cmd
 					cmd = "config.inputDevices." + self.currentDevice + ".enabled.save()"
-					exec (cmd)
+					exec cmd
 		elif iInputDevices.currentDevice != "":
 			iInputDevices.setName(iInputDevices.currentDevice, configElement.value)
 
@@ -172,23 +174,23 @@ class InitInputDevices:
 
 	def setupConfigEntries(self,device):
 		cmd = "config.inputDevices." + device + " = ConfigSubsection()"
-		exec (cmd)
+		exec cmd
 		cmd = "config.inputDevices." + device + ".enabled = ConfigYesNo(default = False)"
-		exec (cmd)
+		exec cmd
 		cmd = "config.inputDevices." + device + ".enabled.addNotifier(self.inputDevicesEnabledChanged,config.inputDevices." + device + ".enabled)"
-		exec (cmd)
+		exec cmd
 		cmd = "config.inputDevices." + device + '.name = ConfigText(default="")'
-		exec (cmd)
+		exec cmd
 		cmd = "config.inputDevices." + device + ".name.addNotifier(self.inputDevicesNameChanged,config.inputDevices." + device + ".name)"
-		exec (cmd)
+		exec cmd
 		cmd = "config.inputDevices." + device + ".repeat = ConfigSlider(default=100, increment = 10, limits=(0, 500))"
-		exec (cmd)
+		exec cmd
 		cmd = "config.inputDevices." + device + ".repeat.addNotifier(self.inputDevicesRepeatChanged,config.inputDevices." + device + ".repeat)"
-		exec (cmd)
+		exec cmd
 		cmd = "config.inputDevices." + device + ".delay = ConfigSlider(default=700, increment = 100, limits=(0, 5000))"
-		exec (cmd)
+		exec cmd
 		cmd = "config.inputDevices." + device + ".delay.addNotifier(self.inputDevicesDelayChanged,config.inputDevices." + device + ".delay)"
-		exec (cmd)
+		exec cmd
 
 
 iInputDevices = inputDevices()
@@ -199,7 +201,7 @@ config.plugins.remotecontroltype.rctype = ConfigInteger(default = 0)
 
 class RcTypeControl():
 	def __init__(self):
-		if pathExists('/proc/stb/ir/rc/type') and pathExists('/proc/stb/info/boxtype') and not getBoxType().startswith('gb'):
+		if pathExists('/proc/stb/ir/rc/type') and pathExists('/proc/stb/info/boxtype') and getBrandOEM() != 'gigablue':
 			self.isSupported = True
 
 			fd = open('/proc/stb/info/boxtype', 'r')
@@ -219,7 +221,7 @@ class RcTypeControl():
 
 	def writeRcType(self, rctype):
 		fd = open('/proc/stb/ir/rc/type', 'w')
-		fd.write('%d' % (rctype))
+		fd.write('%d' % rctype)
 		fd.close()
 
 iRcTypeControl = RcTypeControl()

@@ -1,16 +1,25 @@
+from boxbranding import getBoxType, getMachineName
 from Screens.Wizard import WizardSummary
 from Screens.WizardLanguage import WizardLanguage
 from Screens.Rc import Rc
 from Components.AVSwitch import iAVSwitch
 
-from Components.About import about
-from Components.Pixmap import Pixmap, MovingPixmap, MultiPixmap
+from Components.Pixmap import Pixmap
 from Components.config import config, ConfigBoolean, configfile
 
 from Tools.Directories import resolveFilename, SCOPE_SKIN, SCOPE_ACTIVE_SKIN
 from Tools.HardwareInfo import HardwareInfo
 
 config.misc.showtestcard = ConfigBoolean(default = False)
+
+boxtype = getBoxType()
+
+has_rca = False
+has_dvi = False
+if boxtype == 'gbquad' or boxtype == 'gbquadplus' or boxtype == 'et5x00' or boxtype == 'et6000' or boxtype == 'e3hd' or boxtype == 'odinm6' or getMachineName() == 'AX-Odin' or boxtype == 'ebox7358' or boxtype == 'eboxlumi' or boxtype == 'tmnano' or boxtype == 'ultra' or boxtype == "me" or boxtype == "minime" or boxtype == 'optimussos1' or boxtype == 'optimussos2' or boxtype == 'gb800seplus' or boxtype == 'gb800ueplus' or boxtype == 'ini-1000ru' or boxtype == 'ini-1000sv' or boxtype == 'ixussone' or boxtype == 'ixusszero' or boxtype == 'enfinity' or boxtype == 'force1':	
+	has_rca = True
+if boxtype == 'dm8000' or boxtype == 'dm800':
+	has_dvi = True
 
 class VideoWizardSummary(WizardSummary):
 	def __init__(self, session, parent):
@@ -61,7 +70,6 @@ class VideoWizard(WizardLanguage, Rc):
 		self.rate = None
 
 	def createSummary(self):
-		from Screens.Wizard import WizardSummary
 		return VideoWizardSummary
 
 	def markDone(self):
@@ -78,8 +86,10 @@ class VideoWizard(WizardLanguage, Rc):
 		for port in self.hw.getPortList():
 			if self.hw.isPortUsed(port):
 				descr = port
-				if descr == 'DVI' and has_hdmi:
-					descr = 'HDMI'
+				if descr == 'HDMI' and has_dvi:
+					descr = 'DVI'
+				elif descr == 'Scart' and has_rca:
+					descr = 'RCA'					
 				if port != "DVI-PC":
 					list.append((descr,port))
 		list.sort(key = lambda x: x[0])
@@ -98,8 +108,10 @@ class VideoWizard(WizardLanguage, Rc):
 		self.inputSelect(self.selection)
 		if self["portpic"].instance is not None:
 			picname = self.selection
-			if picname == 'DVI' and has_hdmi:
-				picname = "HDMI"
+			if picname == 'HDMI' and has_dvi:
+				picname = "DVI"
+			elif picname == 'Scart' and has_rca:
+				picname = "RCA"	
 			self["portpic"].instance.setPixmapFromFile(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/" + picname + ".png"))
 
 	def inputSelect(self, port):
@@ -107,7 +119,7 @@ class VideoWizard(WizardLanguage, Rc):
 		modeList = self.hw.getModeList(self.selection)
 		print "modeList:", modeList
 		self.port = port
-		if (len(modeList) > 0):
+		if len(modeList) > 0:
 			ratesList = self.listRates(modeList[0][0])
 			self.hw.setMode(port = port, mode = modeList[0][0], rate = ratesList[0][0])
 

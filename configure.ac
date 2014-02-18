@@ -15,6 +15,10 @@ m4_ifdef([LT_INIT], [LT_INIT], [AC_PROG_LIBTOOL])
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_PATH_PROG(MSGFMT, msgfmt, AC_MSG_ERROR(Could not find msgfmt))
+AC_PATH_PROG(MSGINIT, msginit, AC_MSG_ERROR(Could not find msginit))
+AC_PATH_PROG(MSGMERGE, msgmerge, AC_MSG_ERROR(Could not find msgmerge))
+AC_PATH_PROG(MSGUNIQ, msguniq, AC_MSG_ERROR(Could not find msguniq))
+AC_PATH_PROG(XGETTEXT, xgettext, AC_MSG_ERROR(Could not find xgettext))
 
 AM_PATH_PYTHON
 AX_PYTHON_DEVEL
@@ -54,42 +58,6 @@ AC_ARG_WITH(boxtype,
 	[BOXTYPE="$withval"],[BOXTYPE="dm800"])
 AC_SUBST(BOXTYPE)
 AC_DEFINE_UNQUOTED(BOXTYPE,"$BOXTYPE",[box type])
-
-AC_ARG_WITH(distro,
-	[  --with-distro=NAME distro name [[openvix,openaaf,...]]],
-	[DISTRO="$withval"],[DISTRO="openvix"])
-AC_SUBST(DISTRO)
-AC_DEFINE_UNQUOTED(DISTRO,"$DISTRO",[distro name])
-
-AC_ARG_WITH(machinebrand,
-	[  --with-machinebrand=NAME brand name [[Vu,Xtrend,...]]],
-	[MACHINE_BRAND="$withval"],[MACHINE_BRAND="Vu+"])
-AC_SUBST(MACHINE_BRAND)
-AC_DEFINE_UNQUOTED(MACHINE_BRAND,"$MACHINE_BRAND",[machine brand])
-
-AC_ARG_WITH(machinename,
-	[  --with-machinename=NAME machine name [[Solo,Ultimo,...]]],
-	[MACHINE_NAME="$withval"],[MACHINE_NAME="Ultimo"])
-AC_SUBST(MACHINE_NAME)
-AC_DEFINE_UNQUOTED(MACHINE_NAME,"$MACHINE_NAME",[machine name])
-
-AC_ARG_WITH(imageversion,
-	[  --with-imageversion=NAME version number [[3.0]]],
-	[IMAGEVERSION="$withval"],[IMAGEVERSION=""])
-AC_SUBST(IMAGEVERSION)
-AC_DEFINE_UNQUOTED(IMAGEVERSION,"$IMAGEVERSION",[version number])
-
-AC_ARG_WITH(imagebuild,
-	[  --with-imagebuild=NAME build number [[628]]],
-	[IMAGEBUILD="$withval"],[IMAGEBUILD=""])
-AC_SUBST(IMAGEBUILD)
-AC_DEFINE_UNQUOTED(IMAGEBUILD,"$IMAGEBUILD",[build number])
-
-AC_ARG_WITH(driverdate,
-	[  --with-driverdate=NAME driver date [[628]]],
-	[DRIVERDATE="$withval"],[DRIVERDATE=""])
-AC_SUBST(DRIVERDATE)
-AC_DEFINE_UNQUOTED(DRIVERDATE,"$DRIVERDATE",[driver date])
 
 AM_CONDITIONAL(AZBOX, test `echo "$BOXTYPE" | cut -b 1-5` == "azbox")
 AM_CONDITIONAL(CUBE, test `echo "$BOXTYPE" | cut -b 1-4` == "cube")
@@ -177,6 +145,16 @@ AC_ARG_ENABLE([sh],
 	esac])
 AM_CONDITIONAL([ENABLE_SH], [test x$enable_sh = xtrue])
 
+AC_ARG_WITH(nolcd,
+	AC_HELP_STRING([--with-nolcd], [disable ascii based lcd, yes or no]),
+	[[withnolcd=$withval]],
+	[[withnolcd=no]]
+)
+if test x"$withnolcd" != xno ; then
+	AC_DEFINE(NO_LCD, 1,[Define when disable an ascii based lcd device])
+fi
+AM_CONDITIONAL(NO_LCD, test x"$withnolcd" != xno)
+
 AC_ARG_WITH(textlcd,
 	AC_HELP_STRING([--with-textlcd], [use ascii based lcd, yes or no]),
 	[[withtextlcd=$withval]],
@@ -237,25 +215,15 @@ if test x"$withbwlcd140" != xno ; then
 fi
 AM_CONDITIONAL(HAVE_BWLCD140, test x"$withbwlcd140" != xno)
 
-AC_ARG_WITH(fullgraphiclcd,
-	AC_HELP_STRING([--with-fullgraphiclcd], [display right_half_vfd_icons from skin(for ultimo), yes or no]),
-	[[withfullgraphiclcd=$withval]],
-	[[withfullgraphiclcd=no]]
+AC_ARG_WITH(bwlcd128,
+	AC_HELP_STRING([--with-bwlcd128], [use 128x32 1bpp black and white display, yes or no]),
+	[[withbwlcd128=$withval]],
+	[[withbwlcd128=no]]
 )
-if test x"$withfullgraphiclcd" != xno ; then
-	AC_DEFINE(HAVE_FULLGRAPHICLCD, 1,[Define when display right_half_vfd_icons from skin, for ultimo])
+if test x"$withbwlcd128" != xno ; then
+	AC_DEFINE(HAVE_BWLCD128, 1,[Define when using a 128x32 black and white display device])
 fi
-AM_CONDITIONAL(HAVE_FULLGRAPHICLCD, test x"$withfullgraphiclcd" != xno)
-
-AC_ARG_WITH(gigabluelcd,
-	AC_HELP_STRING([--with-gigabluelcd], [use fix colour map in color display, yes or no]),
-	[[withgigabluelcd=$withval]],
-	[[withgigabluelcd=no]]
-)
-if test x"$withgigabluelcd" != xno ; then
-	AC_DEFINE(HAVE_GIGABLUELCD, 1,[Define when using a 220x176 color display device])
-fi
-AM_CONDITIONAL(HAVE_GIGABLUELCD, test x"$withgigabluelcd" != xno)
+AM_CONDITIONAL(HAVE_BWLCD128, test x"$withbwlcd128" != xno)
 
 AC_ARG_WITH(oldpvr,
 	AC_HELP_STRING([--with-oldpvr], [use /dev/misc/pvr instead of /dev/dvb/adapterX/dvrX, yes or no]),
@@ -282,11 +250,6 @@ if test `echo "$BOXTYPE" | cut -b 1-2` == "vu"; then
 fi
 
 if test `echo "$BOXTYPE" | cut -b 1-2` == "gb"; then
-	AC_DEFINE(KEY_PLAY_ACTUALLY_IS_KEY_PLAYPAUSE, 1,[define when rc sends a KEY_PLAY event for its KEY_PLAYPAUSE key])
-	AC_DEFINE(FORCE_NO_BLENDING_ACCELERATION, 1,[define when the framebuffer acceleration does not have alphablending support, though the autodetection might indicate that it does])
-fi
-
-if test `echo "$BOXTYPE" | cut -b 1-6` == "venton"; then
 	AC_DEFINE(KEY_PLAY_ACTUALLY_IS_KEY_PLAYPAUSE, 1,[define when rc sends a KEY_PLAY event for its KEY_PLAYPAUSE key])
 	AC_DEFINE(FORCE_NO_BLENDING_ACCELERATION, 1,[define when the framebuffer acceleration does not have alphablending support, though the autodetection might indicate that it does])
 fi
@@ -338,20 +301,6 @@ if test "$with_memcheck" = "yes"; then
 	AC_DEFINE([MEMLEAK_CHECK],[1],[Define to 1 to enable memory leak checks])
 fi
 
-AC_ARG_WITH(po,
-	AS_HELP_STRING([--with-po],[enable updating of po files]),
-	[with_po="$withval"],[with_po="no"])
-if test "$with_po" = "yes"; then
-	AC_PATH_PROG(MSGINIT, msginit)
-	AC_PATH_PROG(MSGMERGE, msgmerge)
-	AC_PATH_PROG(MSGUNIQ, msguniq)
-	AC_PATH_PROG(XGETTEXT, xgettext)
-	if test -z "$MSGINIT" -o -z "$MSGMERGE" -o -z "$MSGUNIQ" -o -z "$XGETTEXT"; then
-		AC_MSG_ERROR([Could not find required gettext tools])
-	fi
-fi
-AM_CONDITIONAL(UPDATE_PO, test "$with_po" = "yes")
-
 ENIGMA2_CFLAGS="-fno-rtti -fno-exceptions"
 AC_SUBST(ENIGMA2_CFLAGS)
 
@@ -368,36 +317,10 @@ data/keymaps/Makefile
 data/displaytext/Makefile
 data/display96/Makefile
 data/display128/Makefile
-data/display140/Makefile
 data/display220/Makefile
-data/display255/Makefile
-data/rc_models/Makefile
-data/rc_models/dmm0/Makefile
-data/rc_models/dmm1/Makefile
-data/rc_models/dmm2/Makefile
-data/rc_models/e3hd/Makefile
-data/rc_models/ebox5000/Makefile
-data/rc_models/et4x00/Makefile
-data/rc_models/et6x00/Makefile
-data/rc_models/et6500/Makefile
-data/rc_models/et9500/Makefile
-data/rc_models/et9x00/Makefile
-data/rc_models/gb/Makefile
-data/rc_models/ini0/Makefile
-data/rc_models/ini1/Makefile
-data/rc_models/ini2/Makefile
-data/rc_models/ini3/Makefile
-data/rc_models/ini4/Makefile
-data/rc_models/iqon/Makefile
-data/rc_models/ixussone/Makefile
-data/rc_models/ixusszero/Makefile
-data/rc_models/odinm7/Makefile
-data/rc_models/odinm9/Makefile
-data/rc_models/tm/Makefile
-data/rc_models/vu/Makefile
-data/rc_models/vu2/Makefile
-data/rc_models/vu3/Makefile
-data/rc_models/xp1000/Makefile
+data/vfd128/Makefile
+data/vfd140/Makefile
+data/vfd255/Makefile
 include/Makefile
 lib/Makefile
 lib/base/eenv.cpp

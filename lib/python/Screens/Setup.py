@@ -9,7 +9,8 @@ from Components.Sources.StaticText import StaticText
 from Components.Label import Label
 from Components.Sources.Boolean import Boolean
 
-from enigma import eEnv, getMachineBrand, getMachineName
+from enigma import eEnv
+from boxbranding import getMachineBrand, getMachineName
 
 import xml.etree.cElementTree
 
@@ -82,7 +83,7 @@ class Setup(ConfigListScreen, Screen):
 		for x in xmldata.findall("setup"):
 			if x.get("key") != self.setup:
 				continue
-			self.addItems(list, x);
+			self.addItems(list, x)
 			self.setup_title = x.get("title", "").encode("UTF-8")
 			self.seperation = int(x.get('separation', '0'))
 

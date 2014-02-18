@@ -6,7 +6,7 @@ from Components.Task import job_manager
 from InfoBarGenerics import InfoBarNotifications
 import Screens.Standby
 from Tools import Notifications
-from enigma import getMachineBrand, getMachineName
+from boxbranding import getMachineBrand, getMachineName
 
 class JobView(InfoBarNotifications, Screen, ConfigListScreen):
 	def __init__(self, session, job, parent=None, cancelable = True, backgroundable = True, afterEventChangeable = True , afterEvent="nothing"):
@@ -107,7 +107,7 @@ class JobView(InfoBarNotifications, Screen, ConfigListScreen):
 				self["cancelable"].boolean = True
 
 	def background(self):
-		if self["backgroundable"].boolean == True:
+		if self["backgroundable"].boolean:
 			self.close(True)
 
 	def ok(self):
@@ -141,7 +141,7 @@ class JobView(InfoBarNotifications, Screen, ConfigListScreen):
 
 	def checkNotifications(self):
 		InfoBarNotifications.checkNotifications(self)
-		if Notifications.notifications == []:
+		if not Notifications.notifications:
 			if self.settings.afterEvent.getValue() == "close" and self.job.status == self.job.FAILED:
 				self.close(False)
 

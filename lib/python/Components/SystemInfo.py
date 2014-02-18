@@ -1,14 +1,17 @@
-from enigma import eDVBResourceManager
-from Tools.Directories import fileExists, resolveFilename, SCOPE_SKIN
-from Tools.HardwareInfo import HardwareInfo
 from os import path
+
+from enigma import eDVBResourceManager
+
+from Tools.Directories import fileExists
+from Tools.HardwareInfo import HardwareInfo
+
 
 SystemInfo = { }
 
 #FIXMEE...
 def getNumVideoDecoders():
 	idx = 0
-	while fileExists("/dev/dvb/adapter0/video%d"%(idx), 'f'):
+	while fileExists("/dev/dvb/adapter0/video%d"% idx, 'f'):
 		idx += 1
 	return idx
 

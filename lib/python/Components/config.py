@@ -357,8 +357,8 @@ class ConfigSelection(ConfigElement):
 		else:
 			descr = self._descr = self.description[self.value]
 		if descr:
-			return ("text", _(descr))
-		return ("text", descr)
+			return "text", _(descr)
+		return "text", descr
 
 	# HTML
 	def getHTML(self, id):
@@ -370,7 +370,7 @@ class ConfigSelection(ConfigElement):
 			else:
 				checked = ''
 			res += '<input type="radio" name="' + id + '" ' + checked + 'value="' + v + '">' + descr + "</input></br>\n"
-		return res;
+		return res
 
 	def unsafeAssign(self, value):
 		# setValue does check if value is in choices. This is safe enough.
@@ -407,8 +407,8 @@ class ConfigBoolean(ConfigElement):
 	def getMulti(self, selected):
 		descr = self.descriptions[self.value]
 		if descr:
-			return ("text", _(descr))
-		return ("text", descr)
+			return "text", _(descr)
+		return "text", descr
 
 	def tostring(self, value):
 		if not value:
@@ -465,9 +465,9 @@ class ConfigDateTime(ConfigElement):
 
 	def handleKey(self, key):
 		if key == KEY_LEFT:
-			self.value = self.value - self.increment
+			self.value -= self.increment
 		elif key == KEY_RIGHT:
-			self.value = self.value + self.increment
+			self.value += self.increment
 		elif key == KEY_HOME or key == KEY_END:
 			self.value = self.default
 
@@ -475,7 +475,7 @@ class ConfigDateTime(ConfigElement):
 		return strftime(self.formatstring, localtime(self.value))
 
 	def getMulti(self, selected):
-		return ("text", strftime(self.formatstring, localtime(self.value)))
+		return "text", strftime(self.formatstring, localtime(self.value))
 
 	def fromstring(self, val):
 		return int(val)
@@ -605,7 +605,7 @@ class ConfigSequence(ConfigElement):
 	def genText(self):
 		value = ""
 		mPos = self.marked_pos
-		num = 0;
+		num = 0
 		for i in self._value:
 			if value:	#fixme no heading separator possible
 				value += self.seperator
@@ -616,7 +616,7 @@ class ConfigSequence(ConfigElement):
 			else:
 				value += (self.censor_char * len(str(self.limits[num][1])))
 			num += 1
-		return (value, mPos)
+		return value, mPos
 
 	def getText(self):
 		(value, mPos) = self.genText()
@@ -627,9 +627,9 @@ class ConfigSequence(ConfigElement):
 			# only mark cursor when we are selected
 			# (this code is heavily ink optimized!)
 		if self.enabled:
-			return ("mtext"[1-selected:], value, [mPos])
+			return "mtext"[1-selected:], value, [mPos]
 		else:
-			return ("text", value)
+			return "text", value
 
 	def tostring(self, val):
 		return self.seperator.join([self.saveSingle(x) for x in val])
@@ -710,17 +710,17 @@ class ConfigIP(ConfigSequence):
 			if value:
 				value += self.seperator
 			value += str(i)
-		leftPos = sum(block_strlen[:(self.marked_block)])+self.marked_block
+		leftPos = sum(block_strlen[:self.marked_block])+self.marked_block
 		rightPos = sum(block_strlen[:(self.marked_block+1)])+self.marked_block
 		mBlock = range(leftPos, rightPos)
-		return (value, mBlock)
+		return value, mBlock
 
 	def getMulti(self, selected):
 		(value, mBlock) = self.genText()
 		if self.enabled:
-			return ("mtext"[1-selected:], value, mBlock)
+			return "mtext"[1-selected:], value, mBlock
 		else:
-			return ("text", value)
+			return "text", value
 
 	def getHTML(self, id):
 		# we definitely don't want leading zeros
@@ -730,6 +730,139 @@ mac_limits = [(1,255),(1,255),(1,255),(1,255),(1,255),(1,255)]
 class ConfigMAC(ConfigSequence):
 	def __init__(self, default):
 		ConfigSequence.__init__(self, seperator = ":", limits = mac_limits, default = default)
+
+class ConfigMacText(ConfigElement, NumericalTextInput):
+	def __init__(self, default = "", visible_width = False):
+		ConfigElement.__init__(self)
+		NumericalTextInput.__init__(self, nextFunc = self.nextFunc, handleTimeout = False)
+
+		self.marked_pos = 0
+		self.allmarked = (default != "")
+		self.fixed_size = 17
+		self.visible_width = visible_width
+		self.offset = 0
+		self.overwrite = 17
+		self.help_window = None
+		self.value = self.last_value = self.default = default
+		self.useableChars = '0123456789ABCDEF'
+
+	def validateMarker(self):
+		textlen = len(self.text)
+		if self.marked_pos > textlen-1:
+			self.marked_pos = textlen-1
+		elif self.marked_pos < 0:
+			self.marked_pos = 0
+
+	def insertChar(self, ch, pos, owr):
+		if self.text[pos] == ':':
+			pos += 1
+		if owr or self.overwrite:
+			self.text = self.text[0:pos] + ch + self.text[pos + 1:]
+		elif self.fixed_size:
+			self.text = self.text[0:pos] + ch + self.text[pos:-1]
+		else:
+			self.text = self.text[0:pos] + ch + self.text[pos:]
+
+	def handleKey(self, key):
+		if key == KEY_LEFT:
+			self.timeout()
+			if self.allmarked:
+				self.marked_pos = len(self.text)
+				self.allmarked = False
+			else:
+				if self.text[self.marked_pos-1] == ':':
+					self.marked_pos -= 2
+				else:
+					self.marked_pos -= 1
+		elif key == KEY_RIGHT:
+			self.timeout()
+			if self.allmarked:
+				self.marked_pos = 0
+				self.allmarked = False
+			else:
+				if self.marked_pos < (len(self.text)-1):
+					if self.text[self.marked_pos+1] == ':':
+						self.marked_pos += 2
+					else:
+						self.marked_pos += 1
+		elif key in KEY_NUMBERS:
+			owr = self.lastKey == getKeyNumber(key)
+			newChar = self.getKey(getKeyNumber(key))
+			self.insertChar(newChar, self.marked_pos, owr)
+		elif key == KEY_TIMEOUT:
+			self.timeout()
+			if self.help_window:
+				self.help_window.update(self)
+			if self.text[self.marked_pos] == ':':
+				self.marked_pos += 1
+			return
+
+		if self.help_window:
+			self.help_window.update(self)
+		self.validateMarker()
+		self.changed()
+
+	def nextFunc(self):
+		self.marked_pos += 1
+		self.validateMarker()
+		self.changed()
+
+	def getValue(self):
+		try:
+			return self.text.encode("utf-8")
+		except UnicodeDecodeError:
+			print "Broken UTF8!"
+			return self.text
+
+	def setValue(self, val):
+		try:
+			self.text = val.decode("utf-8")
+		except UnicodeDecodeError:
+			self.text = val.decode("utf-8", "ignore")
+			print "Broken UTF8!"
+
+	value = property(getValue, setValue)
+	_value = property(getValue, setValue)
+
+	def getText(self):
+		return self.text.encode("utf-8")
+
+	def getMulti(self, selected):
+		if self.visible_width:
+			if self.allmarked:
+				mark = range(0, min(self.visible_width, len(self.text)))
+			else:
+				mark = [self.marked_pos-self.offset]
+			return "mtext"[1-selected:], self.text[self.offset:self.offset+self.visible_width].encode("utf-8")+" ", mark
+		else:
+			if self.allmarked:
+				mark = range(0, len(self.text))
+			else:
+				mark = [self.marked_pos]
+			return "mtext"[1-selected:], self.text.encode("utf-8")+" ", mark
+
+	def onSelect(self, session):
+		self.allmarked = (self.value != "")
+		if session is not None:
+			from Screens.NumericalTextInputHelpDialog import NumericalTextInputHelpDialog
+			self.help_window = session.instantiateDialog(NumericalTextInputHelpDialog, self)
+			self.help_window.show()
+
+	def onDeselect(self, session):
+		self.marked_pos = 0
+		self.offset = 0
+		if self.help_window:
+			session.deleteDialog(self.help_window)
+			self.help_window = None
+		if not self.last_value == self.value:
+			self.changedFinal()
+			self.last_value = self.value
+
+	def getHTML(self, id):
+		return '<input type="text" name="' + id + '" value="' + self.value + '" /><br>\n'
+
+	def unsafeAssign(self, value):
+		self.value = str(value)
 
 class ConfigPosition(ConfigSequence):
 	def __init__(self, default, args):
@@ -976,13 +1109,13 @@ class ConfigText(ConfigElement, NumericalTextInput):
 				mark = range(0, min(self.visible_width, len(self.text)))
 			else:
 				mark = [self.marked_pos-self.offset]
-			return ("mtext"[1-selected:], self.text[self.offset:self.offset+self.visible_width].encode("utf-8")+" ", mark)
+			return "mtext"[1-selected:], self.text[self.offset:self.offset+self.visible_width].encode("utf-8")+" ", mark
 		else:
 			if self.allmarked:
 				mark = range(0, len(self.text))
 			else:
 				mark = [self.marked_pos]
-			return ("mtext"[1-selected:], self.text.encode("utf-8")+" ", mark)
+			return "mtext"[1-selected:], self.text.encode("utf-8")+" ", mark
 
 	def onSelect(self, session):
 		self.allmarked = (self.value != "")
@@ -1017,7 +1150,7 @@ class ConfigPassword(ConfigText):
 		mtext, text, mark = ConfigText.getMulti(self, selected)
 		if self.hidden:
 			text = len(text) * self.censor_char
-		return (mtext, text, mark)
+		return mtext, text, mark
 
 	def onSelect(self, session):
 		ConfigText.onSelect(self, session)
@@ -1099,7 +1232,7 @@ class ConfigNumber(ConfigText):
 					return
 			else:
 				ascii = getKeyNumber(key) + 48
-  			newChar = unichr(ascii)
+			newChar = unichr(ascii)
 			if self.allmarked:
 				self.deleteAllChars()
 				self.allmarked = False
@@ -1138,13 +1271,13 @@ class ConfigDirectory(ConfigText):
 			return ConfigText.getValue(self)
 
 	def setValue(self, val):
-		if val == None:
+		if val is None:
 			val = ""
 		ConfigText.setValue(self, val)
 
 	def getMulti(self, selected):
 		if self.text == "":
-			return ("mtext"[1-selected:], _("List of storage devices"), range(0))
+			return "mtext"[1-selected:], _("List of storage devices"), range(0)
 		else:
 			return ConfigText.getMulti(self, selected)
 
@@ -1185,7 +1318,7 @@ class ConfigSlider(ConfigElement):
 
 	def getMulti(self, selected):
 		self.checkValues()
-		return ("slider", self.value, self.max)
+		return "slider", self.value, self.max
 
 	def fromstring(self, value):
 		return int(value)
@@ -1205,7 +1338,8 @@ class ConfigSatlist(ConfigSelection):
 	orbital_position = property(getOrbitalPosition)
 
 class ConfigSet(ConfigElement):
-	def __init__(self, choices, default = []):
+	def __init__(self, choices, default=None):
+		if not default: default = []
 		ConfigElement.__init__(self)
 		if isinstance(choices, list):
 			choices.sort()
@@ -1256,7 +1390,7 @@ class ConfigSet(ConfigElement):
 
 	def getMulti(self, selected):
 		if not selected or self.pos == -1:
-			return ("text", self.genString(self.value))
+			return "text", self.genString(self.value)
 		else:
 			tmp = self.value[:]
 			ch = self.choices[self.pos]
@@ -1272,7 +1406,7 @@ class ConfigSet(ConfigElement):
 			else:
 				chstr = "("+self.description[ch]+")"
 			len_val1 = len(val1)
-			return ("mtext", val1+chstr+val2, range(len_val1, len_val1 + len(chstr)))
+			return "mtext", val1+chstr+val2, range(len_val1, len_val1 + len(chstr))
 
 	def onDeselect(self, session):
 		self.pos = -1
@@ -1289,7 +1423,8 @@ class ConfigSet(ConfigElement):
 	description = property(lambda self: descriptionList(self.choices.choices, choicesList.LIST_TYPE_LIST))
 
 class ConfigLocations(ConfigElement):
-	def __init__(self, default = [], visible_width = False):
+	def __init__(self, default=None, visible_width=False):
+		if not default: default = []
 		ConfigElement.__init__(self)
 		self.visible_width = visible_width
 		self.pos = -1
@@ -1355,7 +1490,7 @@ class ConfigLocations(ConfigElement):
 		for x in self.locations:
 			if x[1] == mp:
 				x[2] = True
-			elif x[1] == None and fileExists(x[0]):
+			elif x[1] is None and fileExists(x[0]):
 				x[1] = self.getMountpoint(x[0])
 				x[2] = True
 
@@ -1407,9 +1542,9 @@ class ConfigLocations(ConfigElement):
 		if not selected:
 			valstr = " ".join(self.value)
 			if self.visible_width and len(valstr) > self.visible_width:
-				return ("text", valstr[0:self.visible_width])
+				return "text", valstr[0:self.visible_width]
 			else:
-				return ("text", valstr)
+				return "text", valstr
 		else:
 			i = 0
 			valstr = ""
@@ -1427,9 +1562,9 @@ class ConfigLocations(ConfigElement):
 					off = 0
 				else:
 					off = min(ind1+1-self.visible_width/2, len(valstr)-self.visible_width)
-				return ("mtext", valstr[off:off+self.visible_width], range(ind1-off,ind2-off))
+				return "mtext", valstr[off:off+self.visible_width], range(ind1-off,ind2-off)
 			else:
-				return ("mtext", valstr, range(ind1,ind2))
+				return "mtext", valstr, range(ind1,ind2)
 
 	def onDeselect(self, session):
 		self.pos = -1
@@ -1690,6 +1825,9 @@ config = Config()
 config.misc = ConfigSubsection()
 
 class ConfigFile:
+	def __init__(self):
+		pass
+
 	CONFIG_FILE = resolveFilename(SCOPE_CONFIG, "settings")
 
 	def load(self):
@@ -1825,17 +1963,17 @@ class ConfigCECAddress(ConfigSequence):
 			if value:
 				value += self.seperator
 			value += str(i)
-		leftPos = sum(block_strlen[:(self.marked_block)])+self.marked_block
+		leftPos = sum(block_strlen[:self.marked_block])+self.marked_block
 		rightPos = sum(block_strlen[:(self.marked_block+1)])+self.marked_block
 		mBlock = range(leftPos, rightPos)
-		return (value, mBlock)
+		return value, mBlock
 
 	def getMulti(self, selected):
 		(value, mBlock) = self.genText()
 		if self.enabled:
-			return ("mtext"[1-selected:], value, mBlock)
+			return "mtext"[1-selected:], value, mBlock
 		else:
-			return ("text", value)
+			return "text", value
 
 	def getHTML(self, id):
 		# we definitely don't want leading zeros

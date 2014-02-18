@@ -1,8 +1,11 @@
+from boxbranding import getImageVersion
+from urllib import urlopen
+import socket
+import os
+
+from enigma import eConsoleAppContainer, eDVBDB
+
 from Screens.Screen import Screen
-from enigma import eConsoleAppContainer, eDVBDB, getImageVersionString
-
-
-from Components.About import about
 from Components.ActionMap import ActionMap
 from Components.PluginComponent import plugins
 from Components.PluginList import PluginList, PluginEntryComponent, PluginCategoryComponent, PluginDownloadComponent
@@ -20,10 +23,6 @@ from Plugins.Plugin import PluginDescriptor
 from Tools.Directories import resolveFilename, SCOPE_PLUGINS, SCOPE_ACTIVE_SKIN
 from Tools.LoadPixmap import LoadPixmap
 
-from urllib import urlopen
-import socket
-
-import os
 
 language.addCallback(plugins.reloadPlugins)
 
@@ -329,16 +328,16 @@ class PluginDownloadBrowser(Screen):
 			currentTimeoutDefault = socket.getdefaulttimeout()
 			socket.setdefaulttimeout(3)
 			try:
-				config.softwareupdate.updateisunstable.setValue(urlopen("http://enigma2.world-of-satellite.com/feeds/" + getImageVersionString() + "/status").read())
+				config.softwareupdate.updateisunstable.setValue(urlopen("http://enigma2.world-of-satellite.com/feeds/" + getImageVersion() + "/status").read())
 			except:
 				config.softwareupdate.updateisunstable.setValue(1)
 			socket.setdefaulttimeout(currentTimeoutDefault)
 
 			if config.softwareupdate.updateisunstable.getValue() == '1' and config.softwareupdate.updatebeta.getValue():
-				self["text"].setText(_("WARNING: feeds maybe unstable.") + '\n' + _("Downloading plugin information. Please wait..."))
+				self["text"].setText(_("WARNING: feeds may be unstable.") + '\n' + _("Downloading plugin information. Please wait..."))
 				self.container.execute(self.ipkg + " update")
 			elif config.softwareupdate.updateisunstable.getValue() == '1' and not config.softwareupdate.updatebeta.getValue():
-				self["text"].setText(_("Sorry feeds seem be in an unstable state, if you wish to use them please enable 'Allow unstable updates' in online update setup."))
+				self["text"].setText(_("Sorry feeds seem be in an unstable state, if you wish to use them please enable 'Allow unstable updates' in \"software update setup\"."))
 			else:
 				self.container.execute(self.ipkg + " update")
 		elif self.type == self.REMOVE:

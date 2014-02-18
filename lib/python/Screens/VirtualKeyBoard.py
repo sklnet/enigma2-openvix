@@ -19,7 +19,8 @@ class VirtualKeyBoardList(MenuList):
 		self.l.setItemHeight(45)
 
 class VirtualKeyBoardEntryComponent:
-	pass
+	def __init__(self):
+		pass
 
 class VirtualKeyBoard(Screen):
 	def __init__(self, session, title="", **kwargs):
@@ -70,7 +71,7 @@ class VirtualKeyBoard(Screen):
 
 		self["country"] = StaticText("")
 		self["header"] = Label()
-		self["text"] = Input(currPos=len(kwargs.get("text", "").decode("utf-8")), allMarked=False, **kwargs)
+		self["text"] = Input(currPos=len(kwargs.get("text", "").decode("utf-8",'ignore')), allMarked=False, **kwargs)
 		self["list"] = VirtualKeyBoardList([])
 
 		self["actions"] = NumberActionMap(["OkCancelActions", "WizardActions", "ColorActions", "KeyboardInputActions", "InputBoxActions", "InputAsciiActions"],
@@ -87,7 +88,7 @@ class VirtualKeyBoard(Screen):
 				"yellow": self.switchLang,
 				"blue": self.shiftClicked,
 				"deleteBackward": self.backClicked,
-				"deleteForward": self.backClicked,
+				"deleteForward": self.forwardClicked,
 				"back": self.exit,
 				"pageUp": self.cursorRight,
 				"pageDown": self.cursorLeft,
@@ -261,7 +262,7 @@ class VirtualKeyBoard(Screen):
 	def virtualKeyBoardEntryComponent(self, keys):
 		key_bg_width = self.key_bg and self.key_bg.size().width() or 45
 		key_images = self.shiftMode and self.keyImagesShift or self.keyImages
-		res = [(keys)]
+		res = [keys]
 		text = []
 		x = 0
 		for key in keys:
@@ -294,6 +295,9 @@ class VirtualKeyBoard(Screen):
 
 	def backClicked(self):
 		self["text"].deleteBackward()
+
+	def forwardClicked(self):
+		self["text"].deleteForward()
 
 	def shiftClicked(self):
 		self.smsChar = None
@@ -374,7 +378,7 @@ class VirtualKeyBoard(Screen):
 		self.smsChar = None
 		self.selectedKey += 12
 		if self.selectedKey > self.max_key:
-			self.selectedKey = self.selectedKey % 12
+			self.selectedKey %= 12
 		self.markSelectedKey()
 
 	def keyNumberGlobal(self, number):

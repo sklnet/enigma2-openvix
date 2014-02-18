@@ -1,9 +1,15 @@
+from boxbranding import getImageVersion, getImageBuild, getMachineBrand, getMachineName, getBoxType
+from os import rename, path, remove
+from gettext import dgettext
+import urllib
+
+from enigma import eTimer, eDVBDB
+
 import Components.Task
 from Screens.ChoiceBox import ChoiceBox
 from Screens.MessageBox import MessageBox
 from Screens.Screen import Screen
 from Screens.Standby import TryQuitMainloop
-from Components.About import about
 from Components.ActionMap import ActionMap
 from Components.Button import Button
 from Components.config import config
@@ -12,12 +18,7 @@ from Components.Ipkg import IpkgComponent
 from Components.ScrollLabel import ScrollLabel
 from Components.Sources.StaticText import StaticText
 from Components.Slider import Slider
-from enigma import eTimer, eDVBDB, getImageVersionString, getBuildVersionString, getMachineBrand, getMachineName, getBoxType
 
-
-from os import rename, path, remove
-from gettext import dgettext
-import urllib
 
 ocram = ''
 
@@ -69,7 +70,7 @@ class SoftwareUpdateChanges(Screen):
 	def getlog(self):
 		global ocram
 		try:
-			sourcefile = 'http://enigma2.world-of-satellite.com/feeds/' + getImageVersionString() + '/' + getBoxType() + '/'  + self.logtype + '-git.log'
+			sourcefile = 'http://enigma2.world-of-satellite.com/feeds/' + getImageVersion() + '/' + getBoxType() + '/'  + self.logtype + '-git.log'
 			sourcefile,headers = urllib.urlretrieve(sourcefile)
 			rename(sourcefile,'/tmp/' + self.logtype + '-git.log')
 			fd = open('/tmp/' + self.logtype + '-git.log', 'r')
@@ -92,9 +93,9 @@ class SoftwareUpdateChanges(Screen):
 				else:
 					releasever = releasever[0].replace(':',"")
 			if self.logtype == 'oe':
-				imagever = getBuildVersionString()
+				imagever = getImageBuild()
 			else:
-				imagever = int(getBuildVersionString())+805
+				imagever = int(getImageBuild())+805
 			while int(releasever) > int(imagever):
 				if ocram:
 					viewrelease += releasenotes[int(ver)]+'\n'+ocram+'\n'
@@ -235,7 +236,7 @@ class UpdatePlugin(Screen):
 				self.session.openWithCallback(
 					self.modificationCallback,
 					MessageBox,
-					_("A configuration file (%s) has been modified since it was installed.\nDo you want to keep your modifications?") % (param)
+					_("A configuration file (%s) has been modified since it was installed.\nDo you want to keep your modifications?") % param
 				)
 		elif event == IpkgComponent.EVENT_ERROR:
 			self.error += 1
@@ -249,14 +250,14 @@ class UpdatePlugin(Screen):
 				currentTimeoutDefault = socket.getdefaulttimeout()
 				socket.setdefaulttimeout(3)
 				try:
-					config.softwareupdate.updateisunstable.setValue(urlopen("http://enigma2.world-of-satellite.com/feeds/" + getImageVersionString() + "/status").read())
+					config.softwareupdate.updateisunstable.setValue(urlopen("http://enigma2.world-of-satellite.com/feeds/" + getImageVersion() + "/status").read())
 				except:
 					config.softwareupdate.updateisunstable.setValue('1')
 				socket.setdefaulttimeout(currentTimeoutDefault)
 				self.total_packages = None
 				if config.softwareupdate.updateisunstable.getValue() == '1' and config.softwareupdate.updatebeta.getValue():
 					self.total_packages = len(self.ipkg.getFetchedList())
-					message = _("The current update maybe unstable") + "\n" + _("Are you sure you want to update your %s %s ?") % (getMachineBrand(), getMachineName()) + "\n(" + (ngettext("%s updated package available", "%s updated packages available", self.total_packages) % self.total_packages) + ")"
+					message = _("The current update may be unstable") + "\n" + _("Are you sure you want to update your %s %s ?") % (getMachineBrand(), getMachineName()) + "\n(" + (ngettext("%s updated package available", "%s updated packages available", self.total_packages) % self.total_packages) + ")"
 				elif config.softwareupdate.updateisunstable.getValue() == '0':
 					self.total_packages = len(self.ipkg.getFetchedList())
 					message = _("Do you want to update your %s %s ?") % (getMachineBrand(), getMachineName()) + "\n(" + (ngettext("%s updated package available", "%s updated packages available", self.total_packages) % self.total_packages) + ")"
@@ -272,7 +273,7 @@ class UpdatePlugin(Screen):
 						(_("Upgrade and reboot system"), "cold")]
 					if path.exists("/usr/lib/enigma2/python/Plugins/SystemPlugins/ViX/BackupManager.pyo"):
 						if not config.softwareupdate.autosettingsbackup.getValue() and config.backupmanager.backuplocation.getValue():
-							choices.append((_("Perform a setting backup,") + '\n\t' + _("making a backup before updating") + '\n\t' +_("is strongly advised."), "backup"))
+							choices.append((_("Perform a settings backup,") + '\n\t' + _("making a backup before updating") + '\n\t' +_("is strongly advised."), "backup"))
 						if not config.softwareupdate.autoimagebackup.getValue() and config.imagemanager.backuplocation.getValue():
 							choices.append((_("Perform a full image backup"), "imagebackup"))
 					choices.append((_("Update channel list only"), "channels"))
@@ -329,13 +330,13 @@ class UpdatePlugin(Screen):
 
 		if answer[1] == "menu":
 			if config.softwareupdate.updateisunstable.getValue() == '1':
-				message = _("The current update maybe unstable") + "\n" + _("Are you sure you want to update your %s %s ?") % (getMachineBrand(), getMachineName()) + "\n(%s " % self.total_packages + _("Packages") + ")"
+				message = _("The current update may be unstable") + "\n" + _("Are you sure you want to update your %s %s ?") % (getMachineBrand(), getMachineName()) + "\n(%s " % self.total_packages + _("Packages") + ")"
 			elif config.softwareupdate.updateisunstable.getValue() == '0':
 				message = _("Do you want to update your %s %s ?") % (getMachineBrand(), getMachineName()) + "\n(%s " % self.total_packages + _("Packages") + ")"
 			choices = [(_("View the changes"), "changes"),
 				(_("Upgrade and reboot system"), "cold")]
 			if not self.SettingsBackupDone and not config.softwareupdate.autosettingsbackup.getValue() and config.backupmanager.backuplocation.getValue():
-				choices.append((_("Perform a setting backup, making a backup before updating is strongly advised."), "backup"))
+				choices.append((_("Perform a settings backup, making a backup before updating is strongly advised."), "backup"))
 			if not self.ImageBackupDone and not config.softwareupdate.autoimagebackup.getValue() and config.imagemanager.backuplocation.getValue():
 				choices.append((_("Perform a full image backup"), "imagebackup"))
 			choices.append((_("Update channel list only"), "channels"))

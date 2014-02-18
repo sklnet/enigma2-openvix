@@ -1,20 +1,23 @@
+import os
+from time import time
+
+from enigma import setTunerTypePriorityOrder, setPreferredTuner, setSpinnerOnOff, setEnableTtCachingOnOff, eEnv
+import enigma
+
 from Components.About import about
 from Components.Harddisk import harddiskmanager
 from config import ConfigSubsection, ConfigYesNo, config, ConfigSelection, ConfigText, ConfigNumber, ConfigSet, ConfigLocations, NoSave, ConfigClock, ConfigInteger, ConfigBoolean, ConfigPassword, ConfigIP, ConfigSlider, ConfigSelectionNumber
-from Tools.Directories import resolveFilename, SCOPE_HDD, SCOPE_TIMESHIFT, SCOPE_SYSETC, defaultRecordingLocation
-from enigma import setTunerTypePriorityOrder, setPreferredTuner, setSpinnerOnOff, setEnableTtCachingOnOff, Misc_Options, eEnv
+from Tools.Directories import resolveFilename, SCOPE_HDD, SCOPE_TIMESHIFT, defaultRecordingLocation
 from Components.NimManager import nimmanager
 from Components.ServiceList import refreshServiceList
 from SystemInfo import SystemInfo
-import os
-import enigma
-from time import time
+
 
 def InitUsageConfig():
 	config.misc.useNTPminutes = ConfigSelection(default = "30", choices = [("30", "30" + " " +_("minutes")), ("60", _("Hour")), ("1440", _("Once per day"))])
-	config.misc.remotecontrol_text_support = ConfigYesNo(default = False)
+	config.misc.remotecontrol_text_support = ConfigYesNo(default = True)	
 
-	config.usage = ConfigSubsection();
+	config.usage = ConfigSubsection()
 	config.usage.showdish = ConfigSelection(default = "flashing", choices = [("flashing", _("Flashing")), ("normal", _("Not Flashing")), ("off", _("Off"))])
 	config.usage.multibouquet = ConfigYesNo(default = True)
 
@@ -49,7 +52,7 @@ def InitUsageConfig():
 	config.usage.show_infobar_on_skip = ConfigYesNo(default = True)
 	config.usage.show_infobar_on_event_change = ConfigYesNo(default = False)
 	config.usage.show_infobar_channel_number = ConfigYesNo(default = False)
-	config.usage.show_second_infobar = ConfigSelection(default = None, choices = [(None, _("None")), ("0", _("No timeout"))] + choicelist + [("EPG",_("EPG")),("INFOBAREPG",_("InfoBar EPG"))])
+	config.usage.show_second_infobar = ConfigSelection(default = "5", choices = [(None, _("None")), ("0", _("No timeout"))] + choicelist + [("EPG",_("EPG")),("INFOBAREPG",_("InfoBar EPG"))])
 	def showsecondinfobarChanged(configElement):
 		if config.usage.show_second_infobar.getValue() != "INFOBAREPG":
 			SystemInfo["InfoBarEpg"] = True
@@ -299,8 +302,8 @@ def InitUsageConfig():
 	def EpgCacheSaveSchedChanged(configElement):
 		import EpgLoadSave
 		EpgLoadSave.EpgCacheSaveCheck()
- 	config.epg.cacheloadsched.addNotifier(EpgCacheLoadSchedChanged, immediate_feedback = False)
- 	config.epg.cachesavesched.addNotifier(EpgCacheSaveSchedChanged, immediate_feedback = False)
+	config.epg.cacheloadsched.addNotifier(EpgCacheLoadSchedChanged, immediate_feedback = False)
+	config.epg.cachesavesched.addNotifier(EpgCacheSaveSchedChanged, immediate_feedback = False)
 	config.epg.cacheloadtimer = ConfigSelectionNumber(default = 24, stepwidth = 1, min = 1, max = 24, wraparound = True)
 	config.epg.cachesavetimer = ConfigSelectionNumber(default = 24, stepwidth = 1, min = 1, max = 24, wraparound = True)
 
@@ -316,10 +319,10 @@ def InitUsageConfig():
 
 	hddchoises = [('/etc/enigma2/', 'Internal Flash')]
 	for p in harddiskmanager.getMountedPartitions():
-		d = os.path.normpath(p.mountpoint)
 		if os.path.exists(p.mountpoint):
+			d = os.path.normpath(p.mountpoint)
 			if p.mountpoint != '/':
-				hddchoises.append((d + '/', p.mountpoint))
+				hddchoises.append((p.mountpoint, d))
 	config.misc.epgcachepath = ConfigSelection(default = '/etc/enigma2/', choices = hddchoises)
 	config.misc.epgcachefilename = ConfigText(default='epg', fixed_size=False)
 	config.misc.epgcache_filename = ConfigText(default = (config.misc.epgcachepath.getValue() + config.misc.epgcachefilename.getValue().replace('.dat','') + '.dat'))
@@ -333,7 +336,7 @@ def InitUsageConfig():
 		if not config.misc.epgcache_filename.getValue().startswith("/etc/enigma2/"):
 			if os.path.exists('/etc/enigma2/' + config.misc.epgcachefilename.getValue().replace('.dat','') + '.dat'):
 				os.remove('/etc/enigma2/' + config.misc.epgcachefilename.getValue().replace('.dat','') + '.dat')
- 	config.misc.epgcachepath.addNotifier(EpgCacheChanged, immediate_feedback = False)
+	config.misc.epgcachepath.addNotifier(EpgCacheChanged, immediate_feedback = False)
 	config.misc.epgcachefilename.addNotifier(EpgCacheChanged, immediate_feedback = False)
 
 	config.misc.showradiopic = ConfigYesNo(default = True)
@@ -415,10 +418,10 @@ def InitUsageConfig():
 
 	debugpath = [('/home/root/logs/', '/home/root/')]
 	for p in harddiskmanager.getMountedPartitions():
-		d = os.path.normpath(p.mountpoint)
 		if os.path.exists(p.mountpoint):
+			d = os.path.normpath(p.mountpoint)
 			if p.mountpoint != '/':
-				debugpath.append((d + '/logs/', p.mountpoint))
+				debugpath.append((p.mountpoint + 'logs/', d))
 	config.crash.debug_path = ConfigSelection(default = "/home/root/logs/", choices = debugpath)
 
 	def updatedebug_path(configElement):
@@ -635,7 +638,7 @@ def InitUsageConfig():
 		config.epgselection.infobar_preview_mode = ConfigSelection(choices = [("0",_("Disabled")), ("1", _("Full screen"))], default = "1")
 	config.epgselection.infobar_roundto = ConfigSelection(default = "15", choices = [("15", _("%d minutes") % 15), ("30", _("%d minutes") % 30), ("60", _("%d minutes") % 60)])
 	config.epgselection.infobar_prevtime = ConfigClock(default = time())
-	config.epgselection.infobar_prevtimeperiod = ConfigSelection(default = "300", choices = [("60", _("%d minutes") % 60), ("90", _("%d minutes") % 90), ("120", _("%d minutes") % 120), ("150", _("%d minutes") % 150), ("180", _("%d minutes") % 180), ("210", _("%d minutes") % 210), ("240", _("%d minutes") % 240), ("270", _("%d minutes") % 270), ("300", _("%d minutes") % 300)])
+	config.epgselection.infobar_prevtimeperiod = ConfigSelection(default = "180", choices = [("60", _("%d minutes") % 60), ("90", _("%d minutes") % 90), ("120", _("%d minutes") % 120), ("150", _("%d minutes") % 150), ("180", _("%d minutes") % 180), ("210", _("%d minutes") % 210), ("240", _("%d minutes") % 240), ("270", _("%d minutes") % 270), ("300", _("%d minutes") % 300)])
 	config.epgselection.infobar_primetimehour = ConfigSelectionNumber(default = 20, stepwidth = 1, min = 00, max = 23, wraparound = True)
 	config.epgselection.infobar_primetimemins = ConfigSelectionNumber(default = 00, stepwidth = 1, min = 00, max = 59, wraparound = True)
 	config.epgselection.infobar_servicetitle_mode = ConfigSelection(default = "servicename", choices = [("servicename", _("Service Name")),("picon", _("Picon")),("picon+servicename", _("Picon and Service Name")) ])

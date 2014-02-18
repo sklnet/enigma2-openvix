@@ -1,31 +1,29 @@
 # -*- coding: UTF-8 -*-
 # CCcam Info by AliAbdul
 from base64 import encodestring
+from os import listdir, remove, rename, system
+
+from enigma import eListboxPythonMultiContent, eTimer, gFont, loadPNG, RT_HALIGN_RIGHT
+
 from Components.ActionMap import ActionMap, NumberActionMap
-from Components.config import config, ConfigInteger, ConfigSelection, ConfigSubsection, ConfigText, ConfigYesNo, getConfigListEntry
+from Components.config import config, getConfigListEntry
 from Components.ConfigList import ConfigListScreen
 from Components.Console import Console
 from Components.Label import Label
-from Components.Language import language
 from Components.MenuList import MenuList
 from Components.MultiContent import MultiContentEntryText, MultiContentEntryPixmapAlphaTest
 from Components.ScrollLabel import ScrollLabel
-from Components.ServiceEventTracker import ServiceEventTracker
-from enigma import eListboxPythonMultiContent, ePoint, eTimer, getDesktop, gFont, iPlayableService, iServiceInformation, loadPNG, RT_HALIGN_RIGHT
-from os import environ, listdir, remove, rename, system
-from Plugins.Plugin import PluginDescriptor
 from Screens.HelpMenu import HelpableScreen
+
 #from Screens.InfoBar import InfoBar
 from Screens.LocationBox import LocationBox
 from Screens.MessageBox import MessageBox
 from Screens.Screen import Screen
 from Screens.VirtualKeyBoard import VirtualKeyBoard
-from skin import parseColor
-from Tools.Directories import fileExists, resolveFilename, SCOPE_LANGUAGE, SCOPE_PLUGINS
+from Tools.Directories import fileExists
 from twisted.internet import reactor
 from twisted.web.client import HTTPClientFactory
 from urlparse import urlparse, urlunparse
-import gettext
 
 #TOGGLE_SHOW = InfoBar.toggleShow
 
@@ -201,7 +199,7 @@ def getConfigNameAndContent(fileName):
 	else:
 		name = fileName.replace("/var/etc/", "")
 
-	return (name, content)
+	return name, content
 
 #############################################################
 
@@ -230,7 +228,7 @@ class CCcamShareViewList(MenuList):
 		self.l.setFont(0, gFont("Regular", 18))
 
 def CCcamListEntry(name, idx):
-	res = [(name)]
+	res = [name]
 	if idx == 10:
 		idx = "red"
 	elif idx == 11:
@@ -250,7 +248,7 @@ def CCcamListEntry(name, idx):
 	return res
 
 def CCcamServerListEntry(name, color):
-	res = [(name)]
+	res = [name]
 	png = "/usr/share/enigma2/skin_default/buttons/key_%s.png" % color
 	if fileExists(png):
 		res.append(MultiContentEntryPixmapAlphaTest(pos=(0, 0), size=(35, 25), png=loadPNG(png)))
@@ -258,24 +256,24 @@ def CCcamServerListEntry(name, color):
 	return res
 
 def CCcamShareListEntry(hostname, type, caid, system, uphops, maxdown):
-	res = [(hostname, type, caid, system, uphops, maxdown)]
-	res.append(MultiContentEntryText(pos=(0, 0), size=(250, 20), font=0, text=hostname))
-	res.append(MultiContentEntryText(pos=(250, 0), size=(250, 20), font=0, text=_("Type: ")+type, flags=RT_HALIGN_RIGHT))
-	res.append(MultiContentEntryText(pos=(0, 20), size=(250, 20), font=0, text=_("CaID: ")+caid))
-	res.append(MultiContentEntryText(pos=(250, 20), size=(250, 20), font=0, text=_("System: ")+system, flags=RT_HALIGN_RIGHT))
-	res.append(MultiContentEntryText(pos=(0, 40), size=(250, 20), font=0, text=_("Uphops: ")+uphops))
-	res.append(MultiContentEntryText(pos=(250, 40), size=(250, 20), font=0, text=_("Maxdown: ")+maxdown, flags=RT_HALIGN_RIGHT))
+	res = [(hostname, type, caid, system, uphops, maxdown),
+		   MultiContentEntryText(pos=(0, 0), size=(250, 20), font=0, text=hostname),
+		   MultiContentEntryText(pos=(250, 0), size=(250, 20), font=0, text=_("Type: ") + type, flags=RT_HALIGN_RIGHT),
+		   MultiContentEntryText(pos=(0, 20), size=(250, 20), font=0, text=_("CaID: ") + caid),
+		   MultiContentEntryText(pos=(250, 20), size=(250, 20), font=0, text=_("System: ") + system, flags=RT_HALIGN_RIGHT),
+		   MultiContentEntryText(pos=(0, 40), size=(250, 20), font=0, text=_("Uphops: ") + uphops),
+		   MultiContentEntryText(pos=(250, 40), size=(250, 20), font=0, text=_("Maxdown: ") + maxdown, flags=RT_HALIGN_RIGHT)]
 	return res
 
 def CCcamShareViewListEntry(caidprovider, providername, numberofcards, numberofreshare):
-	res = [(caidprovider, providername, numberofcards)]
-	res.append(MultiContentEntryText(pos=(0, 0), size=(430, 20), font=0, text=providername))
-	res.append(MultiContentEntryText(pos=(430, 0), size=(50, 20), font=0, text=numberofcards, flags=RT_HALIGN_RIGHT))
-	res.append(MultiContentEntryText(pos=(480, 0), size=(50, 20), font=0, text=numberofreshare, flags=RT_HALIGN_RIGHT))
+	res = [(caidprovider, providername, numberofcards),
+		   MultiContentEntryText(pos=(0, 0), size=(430, 20), font=0, text=providername),
+		   MultiContentEntryText(pos=(430, 0), size=(50, 20), font=0, text=numberofcards, flags=RT_HALIGN_RIGHT),
+		   MultiContentEntryText(pos=(480, 0), size=(50, 20), font=0, text=numberofreshare, flags=RT_HALIGN_RIGHT)]
 	return res
 
 def CCcamConfigListEntry(file):
-	res = [(file)]
+	res = [file]
 
 	try:
 		f = open(CFG, "r")
@@ -297,7 +295,7 @@ def CCcamConfigListEntry(file):
 	return res
 
 def CCcamMenuConfigListEntry(name, blacklisted):
-	res = [(name)]
+	res = [name]
 
 	if blacklisted:
 		png = lock_off
@@ -414,7 +412,7 @@ class CCcamInfoMain(Screen):
 			self.showInfo(_("Using old profile: ") + self.url, _("Profile"))
 
 	def keyNumberGlobal(self, idx):
-		if (self.working) == False and (idx < len(self.menu_list)):
+		if self.working == False and (idx < len(self.menu_list)):
 			self.working = True
 			sel = self.menu_list[idx]
 
@@ -492,19 +490,19 @@ class CCcamInfoMain(Screen):
 		self.keyNumberGlobal(self["menu"].getSelectedIndex())
 
 	def up(self):
-		if self.working == False:
+		if not self.working:
 			self["menu"].up()
 
 	def down(self):
-		if self.working == False:
+		if not self.working:
 			self["menu"].down()
 
 	def left(self):
-		if self.working == False:
+		if not self.working:
 			self["menu"].pageUp()
 
 	def right(self):
-		if self.working == False:
+		if not self.working:
 			self["menu"].pageDown()
 
 	def getWebpageError(self, error=""):
@@ -801,7 +799,7 @@ class CCcamShareViewMenu(Screen, HelpableScreen):
 		self.onLayoutFinish.append(self.getProviders)
 
 	def exit(self):
-		if self.working == False:
+		if not self.working:
 			self.close()
 
 	def getProviders(self):
@@ -1355,7 +1353,7 @@ class CCcamInfoShareInfo(Screen):
 		self.onLayoutFinish.append(self.readShares)
 
 	def exit(self):
-		if self.working == False:
+		if not self.working:
 			self.close()
 
 	def readShares(self):
@@ -1421,28 +1419,28 @@ class CCcamInfoShareInfo(Screen):
 		self.working = False
 
 	def uhopsPlus(self):
-		if self.working == False:
+		if not self.working:
 			self.uphops += 1
 			if self.uphops > 9:
 				self.uphops = -1
 			self.refreshList()
 
 	def uhopsMinus(self):
-		if self.working == False:
+		if not self.working:
 			self.uphops -= 1
 			if self.uphops < -1:
 				self.uphops = 9
 			self.refreshList()
 
 	def maxdownPlus(self):
-		if self.working == False:
+		if not self.working:
 			self.maxdown += 1
 			if self.maxdown > 9:
 				self.maxdown = -1
 			self.refreshList()
 
 	def maxdownMinus(self):
-		if self.working == False:
+		if not self.working:
 			self.maxdown -= 1
 			if self.maxdown < -1:
 				self.maxdown = 9

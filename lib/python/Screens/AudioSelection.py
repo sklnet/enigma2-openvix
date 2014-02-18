@@ -1,3 +1,5 @@
+from enigma import iPlayableService, eTimer
+
 from Screen import Screen
 from Screens.Setup import getConfigMenuItem, Setup
 from Components.ServiceEventTracker import ServiceEventTracker
@@ -8,13 +10,11 @@ from Components.Label import Label
 from Components.Sources.List import List
 from Components.Sources.Boolean import Boolean
 from Components.SystemInfo import SystemInfo
-
-from enigma import iPlayableService, eTimer
-
 from Tools.ISO639 import LanguageCodes
-from Tools.BoundFunction import boundFunction
+
 FOCUS_CONFIG, FOCUS_STREAMS = range(2)
 [PAGE_AUDIO, PAGE_SUBTITLES] = ["audio", "subtitles"]
+
 
 class AudioSelection(Screen, ConfigListScreen):
 	def __init__(self, session, infobar=None, page=PAGE_AUDIO):
@@ -161,12 +161,6 @@ class AudioSelection(Screen, ConfigListScreen):
 					self["key_blue"].setBoolean(True)
 					for x in Plugins:
 						conflist.append(getConfigListEntry(x[0], ConfigNothing(),x[1]))
-			
-			if SystemInfo["Canedidchecking"]:
-				edid_bypass_choicelist = [("00000000", _("off")), ("00000001", _("on"))]
-				self.settings.edid_bypass = ConfigSelection(choices = edid_bypass_choicelist, default = config.av.bypass_edid_checking.getValue())
-				self.settings.edid_bypass.addNotifier(self.changeEDIDBypass, initial_call = False)
-				conflist.append(getConfigListEntry(_("Bypass HDMI EDID Check"), self.settings.edid_bypass, None))
 
 		elif self.settings.menupage.getValue() == PAGE_SUBTITLES:
 
@@ -257,25 +251,20 @@ class AudioSelection(Screen, ConfigListScreen):
 		if self.infobar.selected_subtitle != subtitle:
 			self.infobar.enableSubtitle(subtitle)
 
-	def changeEDIDBypass(self, edid_bypass):
-		if edid_bypass.getValue():
-			config.av.bypass_edid_checking.value = edid_bypass.getValue()
-		config.av.bypass_edid_checking.save()
-
 	def change3DSurround(self, surround_3d):
 		if surround_3d.getValue():
 			config.av.surround_3d.value = surround_3d.getValue()
 		config.av.surround_3d.save()
 
 	def changeAC3Downmix(self, downmix):
-		if downmix.getValue() == True:
+		if downmix.getValue():
 			config.av.downmix_ac3.value = True
 		else:
 			config.av.downmix_ac3.value = False
 		config.av.downmix_ac3.save()
 
 	def changeAACDownmix(self, downmix):
-		if downmix.getValue() == True:
+		if downmix.getValue():
 			config.av.downmix_aac.value = True
 		else:
 			config.av.downmix_aac.value = False

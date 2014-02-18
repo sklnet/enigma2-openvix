@@ -2,7 +2,8 @@ from config import config, ConfigSlider, ConfigSelection, ConfigSubDict, ConfigY
 from Components.About import about
 from Tools.CList import CList
 from Tools.HardwareInfo import HardwareInfo
-from enigma import eAVSwitch, getDesktop, getBoxType
+from enigma import eAVSwitch, getDesktop
+from boxbranding import getBoxType, getBrandOEM
 from SystemInfo import SystemInfo
 import os
 
@@ -61,26 +62,26 @@ class AVSwitch:
 		modes["Scart"] = ["PAL", "NTSC", "Multi"]
 		# modes["DVI-PC"] = ["PC"]
 
-		if about.getChipSetString() in ('7358', '7356', '7424'):
+		if about.getChipSetString() in ('7358', '7356', '7424', '7425'):
 			modes["HDMI"] = ["720p", "1080p", "1080i", "576p", "576i", "480p", "480i"]
-			widescreen_modes = set(["720p", "1080p", "1080i"])
+			widescreen_modes = {"720p", "1080p", "1080i"}
 		else:
 			modes["HDMI"] = ["720p", "1080i", "576p", "576i", "480p", "480i"]
-			widescreen_modes = set(["720p", "1080i"])
+			widescreen_modes = {"720p", "1080i"}
 
 		modes["YPbPr"] = modes["HDMI"]
-		if getBoxType().startswith('vu'):
+		if getBrandOEM() == 'vuplus':
 			modes["Scart-YPbPr"] = modes["HDMI"]
 
 		# if modes.has_key("DVI-PC") and not getModeList("DVI-PC"):
 		# 	print "remove DVI-PC because of not existing modes"
 		# 	del modes["DVI-PC"]
-		if modes.has_key("YPbPr") and getBoxType() in ('et4x00', 'xp1000', 'tm2t', 'tmsingle', 'odimm7', 'vusolo2', 'tmnano'):
+		if modes.has_key("YPbPr") and getBoxType() in ('et4x00', 'xp1000', 'tm2t', 'tmsingle', 'odimm7', 'vusolo2', 'tmnano','iqonios300hd', 'e3hd', 'dm500hdv2', 'dm500hd', 'dm800', 'ebox7358', 'eboxlumi', 'ebox5100','ixusszero', 'optimussos1', 'enfinity', 'uniboxhd1'):
 			del modes["YPbPr"]
 		if modes.has_key("Scart") and getBoxType() in ('gbquad', 'et5x00', 'ixussone', 'et6x00', 'tmnano'):
 			del modes["Scart"]
 
-	else:
+	elif about.getCPUString().startswith('STx'):
 
 		rates["PAL"] =			{ "50Hz":	{ 50: "pal" } }
  
@@ -117,7 +118,6 @@ class AVSwitch:
 		modes["YPbPr"] = modes["HDMI"]
 
 		widescreen_modes = set(["576i", "576p", "720p", "1080i", "1080p"])
-
 
 	def __init__(self):
 		self.last_modes_preferred =  [ ]
@@ -182,11 +182,11 @@ class AVSwitch:
 		if mode_60 is None or force == 50:
 			mode_60 = mode_50
 
-		if os.path.exists('/proc/stb/video/videomode_50hz') and not getBoxType().startswith('gb'):
+		if os.path.exists('/proc/stb/video/videomode_50hz') and getBrandOEM() != 'gigablue':
 			f = open("/proc/stb/video/videomode_50hz", "w")
 			f.write(mode_50)
 			f.close()
-		if os.path.exists('/proc/stb/video/videomode_60hz') and not getBoxType().startswith('gb'):
+		if os.path.exists('/proc/stb/video/videomode_60hz') and getBrandOEM() != 'gigablue':
 			f = open("/proc/stb/video/videomode_60hz", "w")
 			f.write(mode_60)
 			f.close()
@@ -197,6 +197,12 @@ class AVSwitch:
 		f = open("/proc/stb/video/videomode", "w")
 		f.write(set_mode)
 		f.close()
+
+		if about.getCPUString().startswith('STx'):
+			#call setResolution() with -1,-1 to read the new scrren dimesions without changing the framebuffer resolution
+			from enigma import gMainDC
+			gMainDC.getInstance().setResolution(-1, -1)
+			self.updateColor(port)
 
 		# self.updateAspect(None)
 
@@ -342,7 +348,7 @@ class AVSwitch:
 	def getFramebufferScale(self):
 		aspect = self.getOutputAspect()
 		fb_size = getDesktop(0).size()
-		return (aspect[0] * fb_size.height(), aspect[1] * fb_size.width())
+		return aspect[0] * fb_size.height(), aspect[1] * fb_size.width()
 
 	def getAspectRatioSetting(self):
 		valstr = config.av.aspectratio.getValue()
@@ -361,6 +367,32 @@ class AVSwitch:
 		elif valstr == "16_9_letterbox":
 			val = 6
 		return val
+
+	def setHDMIColor(self, configElement):
+		if about.getCPUString().startswith('STx'):
+			map = {"hdmi_rgb": 0, "hdmi_yuv": 1, "hdmi_422": 2}
+			open("/proc/stb/avs/0/colorformat", "w").write(configElement.value)
+
+	def setYUVColor(self, configElement):
+		if about.getCPUString().startswith('STx'):
+			map = {"yuv": 0}
+			open("/proc/stb/avs/0/colorformat", "w").write(configElement.value)
+
+	def setHDMIAudioSource(self, configElement):
+		if about.getCPUString().startswith('STx'):
+			open("/proc/stb/hdmi/audio_source", "w").write(configElement.value)
+
+	def updateColor(self, port):
+		if about.getCPUString().startswith('STx'):
+			print "updateColor: ", port
+			if port == "DVI":
+				self.setHDMIColor(config.av.colorformat_hdmi)
+			elif port == "YPbPr":
+				self.setYUVColor(config.av.colorformat_yuv)
+			elif port == "Scart":
+				map = {"cvbs": 0, "rgb": 1, "svideo": 2, "yuv": 3}
+				from enigma import eAVSwitch
+				eAVSwitch.getInstance().setColorFormat(map[config.av.colorformat.value])
 
 iAVSwitch = AVSwitch()
 
@@ -573,7 +605,7 @@ class VideomodeHotplug:
 		iAVSwitch.on_hotplug.remove(self.hotplug)
 
 	def hotplug(self, what):
-		print "hotplug detected on port '%s'" % (what)
+		print "hotplug detected on port '%s'" % what
 		port = config.av.videoport.getValue()
 		mode = config.av.videomode[port].getValue()
 		rate = config.av.videorate[mode].getValue()
