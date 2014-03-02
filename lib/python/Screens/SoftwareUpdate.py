@@ -53,7 +53,7 @@ class SoftwareUpdateChanges(Screen):
 	def changelogtype(self):
 		if self.logtype == 'oe':
 			self["key_yellow"].setText(_("Show OE Log"))
-			self.setTitle(_("Enimga2 Changes"))
+			self.setTitle(_("Enigma2 Changes"))
 			self.logtype = 'e2'
 		else:
 			self["key_yellow"].setText(_("Show E2 Log"))
@@ -95,7 +95,7 @@ class SoftwareUpdateChanges(Screen):
 			if self.logtype == 'oe':
 				imagever = getImageBuild()
 			else:
-				imagever = int(getImageBuild())+805
+				imagever = int(getImageBuild())+804
 			while int(releasever) > int(imagever):
 				if ocram:
 					viewrelease += releasenotes[int(ver)]+'\n'+ocram+'\n'

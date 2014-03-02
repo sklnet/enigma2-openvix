@@ -9,7 +9,7 @@ from Components.ConfigList import ConfigListScreen
 from Components.ActionMap import ActionMap, HelpableActionMap
 from Tools.Directories import resolveFilename, SCOPE_ACTIVE_SKIN
 from Tools.LoadPixmap import LoadPixmap
-from boxbranding import getMachineBrand, getMachineName
+from boxbranding import getBoxType, getMachineBrand, getMachineName
 
 class InputDeviceSelection(Screen, HelpableScreen):
 	def __init__(self, session):
@@ -257,7 +257,7 @@ class InputDeviceSetup(Screen, ConfigListScreen):
 
 class RemoteControlType(Screen, ConfigListScreen):
 	odinRemote = "OdinM9"
-	if boxtype == "maram9":
+	if getBoxType() == "maram9":
 		odinRemote = "MaraM9"
 	
 	rcList = [
@@ -267,21 +267,24 @@ class RemoteControlType(Screen, ConfigListScreen):
 			("6", _("DMM advanced")),
 			("7", _("et5000/6000")),
 			("8", _("VU+")),
+			("9", _("et8000/et10000")),
 			("11", _("et9x00/6500")),
 			("13", _("et4000")),
-			("14", _("XP1000")),
-		]
+			("14", _("XP1000"))
+			]
 
 	defaultRcList = [
 			("et4000", 13),
 			("et5000", 7),
 			("et6000", 7),
 			("et6500", 11),
+			("et8000", 9),
 			("et9000", 11),
 			("et9200", 11),
 			("et9500", 11),
-			("xp1000", 14),
-		]
+			("et10000", 9),
+			("xp1000", 14)
+			]
 
 	def __init__(self, session):
 		Screen.__init__(self, session)
