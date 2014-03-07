@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ViX\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-02-11 13:22+0100\n"
-"PO-Revision-Date: 2014-02-18 19:37+0100\n"
+"POT-Creation-Date: 2014-03-05 04:43+0100\n"
+"PO-Revision-Date: 2014-03-05 11:27+0100\n"
 "Last-Translator: Rob van der Does <robvddoes@gmail.com>\n"
 "Language-Team: Andy Blackburn, Rob van der Does\n"
 "Language: Nederlands\n"
@@ -424,9 +424,6 @@ msgstr "3D instellingen"
 msgid "3X"
 msgstr "3X"
 
-msgid "3d mode"
-msgstr "3d mode"
-
 msgid "4:3"
 msgstr "4:3"
 
@@ -765,9 +762,6 @@ msgstr "Aanvullende info"
 
 msgid "Address"
 msgstr "Adres"
-
-msgid "Adjust 3D settings"
-msgstr "Adjust 3D settings"
 
 msgid "Adjust the color settings so that all the color shades are distinguishable, but appear as saturated as possible. If you are happy with the result, press OK to close the video fine-tuning, or use the number keys to select other test screens."
 msgstr "Wijzig de kleuren zodanig dat alle tinten te onderscheiden, maar wel zo verzadigd mogelijk zijn. Zodra het resultaat u bevalt, drukt u op 'OK' om dit menu af te sluiten of u selecteert met de nummertoetsen een ander testscherm."
@@ -1928,6 +1922,9 @@ msgstr "Bepaal welk kleurformaat voor de scart-aansluiting wordt benut"
 msgid "Configure which tuner type will be preferred, when the same service is available on different types of tuners."
 msgstr "Bepaal welk tunertype de voorkeur heeft, als hetzelfde kanaal beschikbaar is voor verschillende types tuner."
 
+msgid "Configure which tuner will be preferred for recordings, when more than one tuner is available. 'Disabled' would select a tuner based on preferred tuner in customise screen. 'Auto' would choose based on E2's default rules, ignoring preferred tuner in customise screen."
+msgstr "Stel in welke tuner de voorkeur heeft voor opnames als meerdere tuners beschikbaar zijn. \"Uitgeschakeld\" betekent dat de tunerkeuze wordt bepaald door de instelling 'Voorkeurstuner' in het scherm 'Aanpassen'. \"Auto\" betekent dat de keuze wordt gebaseerd op de standaard regels van Enigma, waarbij de instelling \"Voorkeurstuner\" in het scherm \"Aanpassen\" wordt genegeerd. "
+
 msgid "Configure which tuner will be preferred, when more than one tuner is available. If set to 'auto' the system will give priority to the tuner having the lowest number of channels/satellites."
 msgstr "Stel in welke tuner de voorkeur heeft, als meerdere tuners beschikbaar zijn. In de stand 'auto' zal de voorkeur worden gegeven aan de tuner met het kleinste aantal kanalen/satellieten."
 
@@ -2786,6 +2783,9 @@ msgstr "Eindtijd"
 
 msgid "English"
 msgstr "Engels"
+
+msgid "Enigma2 Changes"
+msgstr "Enimga2 veranderingen"
 
 msgid "Enigma2 skin selector"
 msgstr "Enigma2 skinselectie"
@@ -4686,8 +4686,14 @@ msgstr "Open kanaallist"
 msgid "Open service list and select next channel"
 msgstr "Open zenderlijst en selecteer volgende zender"
 
+msgid "Open service list and select next channel for PiP"
+msgstr "Open zenderlijst en selecteer volgende zender voor PiP"
+
 msgid "Open service list and select previous channel"
 msgstr "Open zenderlijst en selecteer vorige zender"
+
+msgid "Open service list and select previous channel for PiP"
+msgstr "Open zenderlijst en selecteer vorige zendervoor PiP"
 
 msgid "Open the movie list"
 msgstr "Open opnamelijst"
@@ -4988,6 +4994,9 @@ msgstr "Volg nu de instructies op uw TV"
 msgid "Please note that the previously selected media could not be accessed and therefore the default directory is being used instead."
 msgstr "De zojuist geselecteerde media kon niet worden benaderd en om die reden wordt nu de standaard map gebruikt."
 
+msgid "Please open Picture in Picture first"
+msgstr "Open eerst picture-in-picture"
+
 msgid "Please press OK to continue."
 msgstr "Druk op OK om door te gaan."
 
@@ -5213,6 +5222,9 @@ msgstr "Voorkeur voor ondertitels die eerder zijn gekozen"
 
 msgid "Preferred tuner"
 msgstr "Voorkeurstuner"
+
+msgid "Preferred tuner for recordings"
+msgstr "Voorkeurstuner voor opnames"
 
 msgid "Prepare another USB stick for image flashing"
 msgstr "Maak een andere USB-stick klaar voor het flashen"
@@ -5524,7 +5536,7 @@ msgid "Remote box"
 msgstr "Remote box"
 
 msgid "Remote control type"
-msgstr "Tyoe afstandsbediening"
+msgstr "Type afstandsbediening"
 
 msgid "Remove"
 msgstr "Verwijderen"
@@ -6559,6 +6571,9 @@ msgstr "TV-weergave modus..."
 msgid "Show time elapsed as positive"
 msgstr "Toon verstreken tijd als positief"
 
+msgid "Show time in 24 hour clock format."
+msgstr "Toon klok in 24-uurs formaat"
+
 msgid "Show time remaining/elapsed"
 msgstr "Toon de resterende/verstreken tijd"
 
@@ -6587,9 +6602,6 @@ msgid "Shutdown"
 msgstr "Afsluiten"
 
 msgid "Side by Side"
-msgstr "Naast elkaar"
-
-msgid "Side by side"
 msgstr "Naast elkaar"
 
 msgid "Signal OK, proceeding"
@@ -7018,6 +7030,9 @@ msgstr "Wissel configuratie"
 
 msgid "Switch next channel"
 msgstr "Ga naar volgende kanaal"
+
+msgid "Switch to HDMI in mode"
+msgstr "Schakel over naar HDMI-in"
 
 msgid "Switch to filelist"
 msgstr "Schakel over naar bestandslijst"
@@ -7634,6 +7649,9 @@ msgstr "Tijd instellingen"
 msgid "Time to execute command or script"
 msgstr "Tijdstip van uitvoeren opdracht of script"
 
+msgid "Timeline 24 Hour"
+msgstr "Tijdlijn 24 uur"
+
 msgid "Timeline font size"
 msgstr "Tijdlijn lettergrootte"
 
@@ -7766,9 +7784,6 @@ msgid "Toneburst A/B"
 msgstr "Toneburst A/B"
 
 msgid "Top and Bottom"
-msgstr "Boven en -onderkant"
-
-msgid "Top and bottom"
 msgstr "Boven en -onderkant"
 
 msgid "Total"
@@ -9093,6 +9108,9 @@ msgstr "omgekeerd alfabetisch"
 msgid "alternative"
 msgstr "alternatief"
 
+msgid "am"
+msgstr "vm"
+
 msgid "arts/culture (without music, general)"
 msgstr "Kunst/Cultuur (zonder muziek, algemeen)"
 
@@ -9340,6 +9358,9 @@ msgstr "ET4000"
 
 msgid "et5000/6000"
 msgstr "ET5000/6000"
+
+msgid "et8000/et10000"
+msgstr "et8000/et10000"
 
 msgid "et9x00/6500"
 msgstr "ET9x00/6500"
@@ -9717,6 +9738,9 @@ msgstr "even wachten, de foto wordt geladen..."
 
 msgid "please wait..."
 msgstr "even wachten..."
+
+msgid "pm"
+msgstr "am"
 
 msgid "popular culture/traditional arts"
 msgstr "populaire cultuur/traditionele kunst"
@@ -10186,8 +10210,23 @@ msgstr "zap en neem op"
 msgid "zapped"
 msgstr "zapte"
 
+#~ msgid "3d mode"
+#~ msgstr "3d mode"
+
+#~ msgid "Adjust 3D settings"
+#~ msgstr "Adjust 3D settings"
+
 #~ msgid "Advanced video setup"
 #~ msgstr "Geavanceerde video-instellingen"
+
+#~ msgid "Configure which tuner for recordings will be preferred, when more than one tuner is available."
+#~ msgstr "Bepaal welke tuner de voorkeur heeft voor opnames, als hetzelfde kanaal beschikbaar is voor verschillende tuners."
+
+#~ msgid "Side by side"
+#~ msgstr "Naast elkaar"
+
+#~ msgid "Top and bottom"
+#~ msgstr "Boven en -onderkant"
 
 #~ msgid "Video setup"
 #~ msgstr "Video-instellingen"
