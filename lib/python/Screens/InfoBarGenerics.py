@@ -3,7 +3,7 @@ from Components.ActionMap import ActionMap, HelpableActionMap, NumberActionMap
 from Components.Harddisk import harddiskmanager, findMountPoint
 from Components.Input import Input
 from Components.Label import Label
-from Components.MovieList import AUDIO_EXTENSIONS
+from Components.MovieList import AUDIO_EXTENSIONS, MOVIE_EXTENSIONS, DVD_EXTENSIONS
 from Components.PluginComponent import plugins
 from Components.ServiceEventTracker import ServiceEventTracker
 from Components.Sources.Boolean import Boolean
@@ -489,7 +489,7 @@ class InfoBarShowHide(InfoBarScreenSaver):
 	def __init__(self):
 		self["ShowHideActions"] = ActionMap( ["InfobarShowHideActions"] ,
 			{
-				"LongOKPressed": self.toggleShow,
+				"LongOKPressed": self.toggleShowLong,
 				"toggleShow": self.toggleShow,
 				"hide": self.keyHide,
 			}, 1) # lower prio to make it possible to override ok and cancel..
@@ -616,6 +616,8 @@ class InfoBarShowHide(InfoBarScreenSaver):
 			self.pvrStateDialog.hide()
 
 	def toggleShow(self):
+		if not hasattr(self, "LongButtonPressed"):
+			self.LongButtonPressed = False
 		if not self.LongButtonPressed:
 			if self.__state == self.STATE_HIDDEN:
 				if not self.secondInfoBarWasShown:
@@ -648,7 +650,9 @@ class InfoBarShowHide(InfoBarScreenSaver):
 					except:
 						pass
 					self.EventViewIsShown = False
-		elif self.LongButtonPressed:
+
+	def toggleShowLong(self):
+		if self.LongButtonPressed:
 			if isinstance(self, InfoBarEPG):
 				if config.vixsettings.InfoBarEpg_mode.getValue() == "1":
 					self.openInfoBarEPG()
@@ -2279,14 +2283,14 @@ class InfoBarExtensions:
 					"openAutoTimerList": (self.showAutoTimerList, _("Show the list of AutoTimers.")),
 					"openEPGSearch": (self.showEPGSearch, _("Search the epg for current event.")),
 					"openIMDB": (self.showIMDB, _("Search IMDb for information about current event.")),
-					"showMediaPlayer": (self.showMediaPlayer, _("Show the media player...")),
+					"openDreamPlex": (self.showDreamPlex, _("Show the DreamPlex player...")),
 				}, 1) # lower priority
 		else:
 			self["InstantExtensionsActions"] = HelpableActionMap(self, "InfobarExtensions",
 				{
 					"extensions": (self.showExtensionSelection, _("view extensions...")),
 					"showPluginBrowser": (self.showPluginBrowser, _("Show the plugin browser..")),
-					"showMediaPlayer": (self.showMediaPlayer, _("Show the media player...")),
+					"showDreamPlex": (self.showDreamPlex, _("Show the DreamPlex player...")),
 				}, 1) # lower priority
 
 		self.addExtension(extension = self.getLogManager, type = InfoBarExtensions.EXTENSION_LIST)
@@ -2364,7 +2368,6 @@ class InfoBarExtensions:
 			else:
 				for y in x[1]():
 					self.updateExtension(y[0], y[1])
-
 
 	def showExtensionSelection(self):
 		self.updateExtensions()
@@ -2501,15 +2504,12 @@ class InfoBarExtensions:
 		else:
 			self.session.open(MessageBox, _("The IMDb plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
 
-	def showMediaPlayer(self):
-		if isinstance(self, InfoBarExtensions):
-			if isinstance(self, InfoBar):
-				try: # falls es nicht installiert ist
-					from Plugins.Extensions.MediaPlayer.plugin import MediaPlayer
-					self.session.open(MediaPlayer)
-					no_plugin = False
-				except Exception, e:
-					self.session.open(MessageBox, _("The MediaPlayer plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+	def showDreamPlex(self):
+		if os.path.exists("/usr/lib/enigma2/python/Plugins/Extensions/DreamPlex/plugin.pyo"):
+			from Plugins.Extensions.DreamPlex.plugin import DPS_MainMenu
+			self.session.open(DPS_MainMenu)
+		else:
+			self.session.open(MessageBox, _("The DreamPlex plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
 
 from Tools.BoundFunction import boundFunction
 import inspect
@@ -2575,7 +2575,7 @@ class InfoBarPiP:
 				self.addExtension((self.getShowHideName, self.showPiP, lambda: True), "blue")
 				self.addExtension((self.getMoveName, self.movePiP, self.pipShown), "green")
 				self.addExtension((self.getSwapName, self.swapPiP, self.pipShown), "yellow")
-				self.addExtension((self.getTogglePipzapName, self.togglePipzap, self.pipShown), "red")
+				# self.addExtension((self.getTogglePipzapName, self.togglePipzap, self.pipShown), "red")
 			else:
 				self.addExtension((self.getShowHideName, self.showPiP, self.pipShown), "blue")
 				self.addExtension((self.getMoveName, self.movePiP, self.pipShown), "green")
@@ -3670,32 +3670,30 @@ class InfoBarHdmi:
 		self["HDMIActions"] = HelpableActionMap(self, "InfobarHDMIActions",
 			{
 				"HDMIin":(self.HDMIIn, _("Switch to HDMI in mode")),
-				"HDMIinLong":(self.HDMIIn, _("Switch to HDMI in mode")),
+				"HDMIinLong":(self.HDMIInLong, _("Switch to HDMI in mode")),
 			}, prio=2)
+
+	def HDMIInLong(self):
+		if self.LongButtonPressed:
+			if not hasattr(self.session, 'pip') and not self.session.pipshown:
+				self.session.pip = self.session.instantiateDialog(PictureInPicture)
+				self.session.pip.playService(eServiceReference('8192:0:1:0:0:0:0:0:0:0:'))
+				self.session.pip.show()
+				self.session.pipshown = True
+			else:
+				curref = self.session.pip.getCurrentService()
+				if curref and curref.type != 8192:
+					self.session.pip.playService(eServiceReference('8192:0:1:0:0:0:0:0:0:0:'))
+				else:
+					self.session.pipshown = False
+					del self.session.pip
 
 	def HDMIIn(self):
 		if not self.LongButtonPressed:
-			if not self.hdmi_enabled:
-				self.curserviceref = self.session.nav.getCurrentlyPlayingServiceOrGroup()
-				self.session.nav.stopService()
+			slist = self.servicelist
+			curref = self.session.nav.getCurrentlyPlayingServiceOrGroup()
+			if curref and curref.type != 8192:
 				self.session.nav.playService(eServiceReference('8192:0:1:0:0:0:0:0:0:0:'))
-				self.hdmi_enabled = True
 			else:
-				self.session.nav.stopService()
-				self.session.nav.playService(self.curserviceref)
-				self.hdmi_enabled = False
-				self.curserviceref = None
-		elif self.LongButtonPressed:
-			if not self.hdmi_enabled:
-				if not hasattr(self.session, 'pip') and not self.session.pipshown:
-					self.session.pip = self.session.instantiateDialog(PictureInPicture)
-					self.session.pip.show()
-				if self.session.pip.playService(eServiceReference('8192:0:1:0:0:0:0:0:0:0:')):
-					self.session.pipshown = True
-				self.hdmi_enabled = True
-			else:
-				self.session.pipshown = False
-				del self.session.pip
-				self.hdmi_enabled = False
-
+				self.session.nav.playService(slist.servicelist.getCurrent())
 

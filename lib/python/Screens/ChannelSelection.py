@@ -16,7 +16,7 @@ from Components.Renderer.Picon import getPiconName
 from Screens.TimerEdit import TimerSanityConflict
 profile("ChannelSelection.py 1")
 from EpgSelection import EPGSelection
-from enigma import eServiceReference, eEPGCache, eServiceCenter, eRCInput, eTimer, ePoint, eDVBDB, iPlayableService, iServiceInformation, getPrevAsciiCode, eEnv, loadPNG
+from enigma import eActionMap, eServiceReference, eEPGCache, eServiceCenter, eRCInput, eTimer, ePoint, eDVBDB, iPlayableService, iServiceInformation, getPrevAsciiCode, eEnv, loadPNG
 from Components.config import config, configfile, ConfigSubsection, ConfigText
 from Tools.NumericalTextInput import NumericalTextInput
 profile("ChannelSelection.py 2")
@@ -212,7 +212,7 @@ class ChannelContextMenu(Screen):
 				if not csel.movemode:
 					append_when_current_valid(current, menu, (_("enable move mode"), self.toggleMoveMode), level = 1)
 					if not inBouquetRootList and current_root and not (current_root.flags & eServiceReference.isGroup):
-						if not current.toString().startswith("-1"):
+						if current.type != -1:
 							menu.append(ChoiceEntryComponent(text = (_("add marker"), self.showMarkerInputBox)))
 						if haveBouquets:
 							append_when_current_valid(current, menu, (_("enable bouquet edit"), self.bouquetMarkStart), level = 0)
@@ -482,9 +482,9 @@ class ChannelSelectionEPG:
 				"ShortRecord": (self.RecordTimerQuestion, _("Add a record timer")),
 				'LongRecord': (self.doZapTimer, _('Add a zap timer for next event'))
 			},-1)
-		self['dialogactions'] = ActionMap(['WizardActions'],
+		self['dialogactions'] = ActionMap(['SetupActions'],
 			{
-				'back': self.closeChoiceBoxDialog,
+				'cancel': self.closeChoiceBoxDialog,
 			})
 		self['dialogactions'].execEnd()
 
@@ -1745,7 +1745,7 @@ class ChannelSelection(ChannelSelectionBase, ChannelSelectionEdit, ChannelSelect
 		elif self.bouquet_mark_edit != OFF:
 			if not (self.bouquet_mark_edit == EDIT_ALTERNATIVES and ref.flags & eServiceReference.isGroup):
 				self.doMark()
-		elif not (ref.flags & eServiceReference.isMarker or ref.toString().startswith("-1")):
+		elif not (ref.flags & eServiceReference.isMarker or ref.type == -1):
 			root = self.getRoot()
 			if not root or not (root.flags & eServiceReference.isGroup):
 				self.zap(enable_pipzap = doClose, preview_zap = not doClose)
@@ -2103,8 +2103,6 @@ class ChannelSelection(ChannelSelectionBase, ChannelSelectionEdit, ChannelSelect
 
 
 class PiPZapSelection(ChannelSelection):
-	instance = None
-
 	def __init__(self, session):
 		ChannelSelection.__init__(self, session)
 		self.skinName = ["SlimChannelSelection","SimpleChannelSelection","ChannelSelection"]
@@ -2113,6 +2111,19 @@ class PiPZapSelection(ChannelSelection):
 			self.pipServiceRelation = getRelationDict()
 		else:
 			self.pipServiceRelation = {}
+
+		self.keymaptimer = eTimer()
+		self.keymaptimer.callback.append(self.enableKeyMap)
+		self.onShown.append(self.disableKeyMap)
+
+	def disableKeyMap(self):
+		eActionMap.getInstance().unbindNativeKey("ListboxActions", 0)
+		eActionMap.getInstance().unbindNativeKey("ListboxActions", 1)
+		self.keymaptimer.start(1000, True)
+
+	def enableKeyMap(self):
+		eActionMap.getInstance().bindKey("keymap.xml", "generic", 103, 5, "ListboxActions", "moveUp")
+		eActionMap.getInstance().bindKey("keymap.xml", "generic", 108, 5, "ListboxActions", "moveDown")
 
 	def channelSelected(self):
 		ref = self.servicelist.getCurrent()
@@ -2137,7 +2148,7 @@ class PiPZapSelection(ChannelSelection):
 				else:
 					self.session.pipshown = False
 					del self.session.pip
-					self.session.openWithCallback(self.close, MessageBox, _("Could not open Picture in Picture"), MessageBox.TYPE_ERROR)
+					self.session.openWithCallback(self.close, MessageBox, _("No free tuner, could not open Picture in Picture"), MessageBox.TYPE_ERROR)
 
 class RadioInfoBar(Screen):
 	def __init__(self, session):
