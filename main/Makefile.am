@@ -51,8 +51,7 @@ enigma2_LDADD = \
 	@PTHREAD_LIBS@ \
 	@PYTHON_LDFLAGS@ \
 	@LIBDDVD_LIBS@ \
-	-ltuxtxt -ltuxtxt32bpp -lcrypt -lrt \
-	-ldl -lpthread -lcrypt -lresolv 
+	-ltuxtxt -ltuxtxt32bpp -lcrypt -lrt
 
 if ENABLE_SH
 enigma2_LDADD += -lmmeimage
