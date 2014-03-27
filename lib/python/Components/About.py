@@ -38,7 +38,7 @@ def getCPUString():
 				if splitted[0].startswith("system type"):
 					system = splitted[1].split(' ')[0]
 		file.close()
-		return system 
+		return system
 	except IOError:
 		return "unavailable"
 

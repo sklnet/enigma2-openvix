@@ -61,8 +61,8 @@ class AVSwitch:
 
 		modes["Scart"] = ["PAL", "NTSC", "Multi"]
 		# modes["DVI-PC"] = ["PC"]
-
-		if about.getChipSetString() in ('7358', '7356', '7424', '7425'):
+	
+		if about.getChipSetString() in ('7358', '7356', '7424', '7425', '7241'):
 			modes["HDMI"] = ["720p", "1080p", "1080i", "576p", "576i", "480p", "480i"]
 			widescreen_modes = {"720p", "1080p", "1080i"}
 		else:
@@ -274,18 +274,18 @@ class AVSwitch:
 		eAVSwitch.getInstance().setColorFormat(value)
 
 	def setConfiguredMode(self):
-		port = config.av.videoport.getValue()
+		port = config.av.videoport.value
 		if port not in config.av.videomode:
 			print "current port not available, not setting videomode"
 			return
 
-		mode = config.av.videomode[port].getValue()
+		mode = config.av.videomode[port].value
 
 		if mode not in config.av.videorate:
 			print "current mode not available, not setting videomode"
 			return
 
-		rate = config.av.videorate[mode].getValue()
+		rate = config.av.videorate[mode].value
 		self.setMode(port, mode, rate)
 
 	def setAspect(self, cfgelement):
@@ -319,19 +319,19 @@ class AVSwitch:
 
 	def getOutputAspect(self):
 		ret = (16,9)
-		port = config.av.videoport.getValue()
+		port = config.av.videoport.value
 		if port not in config.av.videomode:
 			print "current port not available in getOutputAspect!!! force 16:9"
 		else:
-			mode = config.av.videomode[port].getValue()
+			mode = config.av.videomode[port].value
 			force_widescreen = self.isWidescreenMode(port, mode)
-			is_widescreen = force_widescreen or config.av.aspect.getValue() in ("16:9", "16:10")
-			is_auto = config.av.aspect.getValue() == "auto"
+			is_widescreen = force_widescreen or config.av.aspect.value in ("16:9", "16:10")
+			is_auto = config.av.aspect.value == "auto"
 			if is_widescreen:
 				if force_widescreen:
 					pass
 				else:
-					aspect = {"16:9": "16:9", "16:10": "16:10"}[config.av.aspect.getValue()]
+					aspect = {"16:9": "16:9", "16:10": "16:10"}[config.av.aspect.value]
 					if aspect == "16:10":
 						ret = (16,10)
 			elif is_auto:
@@ -351,7 +351,7 @@ class AVSwitch:
 		return aspect[0] * fb_size.height(), aspect[1] * fb_size.width()
 
 	def getAspectRatioSetting(self):
-		valstr = config.av.aspectratio.getValue()
+		valstr = config.av.aspectratio.value
 		if valstr == "4_3_letterbox":
 			val = 0
 		elif valstr == "4_3_panscan":
@@ -400,7 +400,7 @@ def InitAVSwitch():
 	config.av.yuvenabled = ConfigBoolean(default=True)
 	colorformat_choices = {"cvbs": _("CVBS"), "rgb": _("RGB"), "svideo": _("S-Video")}
 	# when YUV is not enabled, don't let the user select it
-	if config.av.yuvenabled.getValue():
+	if config.av.yuvenabled.value:
 		colorformat_choices["yuv"] = _("YPbPr")
 
 	config.av.autores = ConfigSelection(choices={"disabled": _("Disabled"), "all": _("All resolutions"), "hd": _("only HD")}, default="disabled")
@@ -474,15 +474,15 @@ def InitAVSwitch():
 	config.av.policy_169.addNotifier(iAVSwitch.setPolicy169)
 
 	def setColorFormat(configElement):
-		if config.av.videoport and config.av.videoport.getValue() == "Scart-YPbPr":
+		if config.av.videoport and config.av.videoport.value == "Scart-YPbPr":
 			iAVSwitch.setColorFormat(3)
 		else:
 			map = {"cvbs": 0, "rgb": 1, "svideo": 2, "yuv": 3}
-			iAVSwitch.setColorFormat(map[configElement.getValue()])
+			iAVSwitch.setColorFormat(map[configElement.value])
 
 	def setAspectRatio(configElement):
 		map = {"4_3_letterbox": 0, "4_3_panscan": 1, "16_9": 2, "16_9_always": 3, "16_10_letterbox": 4, "16_10_panscan": 5, "16_9_letterbox" : 6}
-		iAVSwitch.setAspectRatio(map[configElement.getValue()])
+		iAVSwitch.setAspectRatio(map[configElement.value])
 	
 	config.av.colorformat.addNotifier(setColorFormat)
 	
@@ -588,7 +588,7 @@ def InitAVSwitch():
 
 	if os.path.exists("/proc/stb/vmpeg/0/pep_scaler_sharpness"):
 		def setScaler_sharpness(config):
-			myval = int(config.getValue())
+			myval = int(config.value)
 			try:
 				print "[VideoMode] setting scaler_sharpness to: %0.8X" % myval
 				f = open("/proc/stb/vmpeg/0/pep_scaler_sharpness", "w")
@@ -624,9 +624,9 @@ class VideomodeHotplug:
 
 	def hotplug(self, what):
 		print "hotplug detected on port '%s'" % what
-		port = config.av.videoport.getValue()
-		mode = config.av.videomode[port].getValue()
-		rate = config.av.videorate[mode].getValue()
+		port = config.av.videoport.value
+		mode = config.av.videomode[port].value
+		rate = config.av.videorate[mode].value
 
 		if not iAVSwitch.isModeAvailable(port, mode, rate):
 			print "mode %s/%s/%s went away!" % (port, mode, rate)

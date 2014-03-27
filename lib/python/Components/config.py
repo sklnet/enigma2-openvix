@@ -1204,6 +1204,8 @@ class ConfigSelectionNumber(ConfigSelection):
 	def setValue(self, val):
 		ConfigSelection.setValue(self, str(val))
 
+	value = property(getValue, setValue)
+
 	def handleKey(self, key):
 		if not self.wraparound:
 			if key == KEY_RIGHT:
@@ -1810,7 +1812,7 @@ class Config(ConfigSubsection):
 			base[names[-1]] = val
 
 			if not base_file: # not the initial config file..
-				#update config.x.y.getValue() when exist
+				#update config.x.y.value when exist
 				try:
 					configEntry = eval(name)
 					if configEntry is not None:
