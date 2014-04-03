@@ -385,10 +385,10 @@ class AVSwitch:
 	def updateColor(self, port):
 		if about.getCPUString().startswith('STx'):
 			print "updateColor: ", port
-			if port == "DVI":
-				self.setHDMIColor(config.av.colorformat_hdmi)
+			if port == "HDMI":
+				self.setHDMIColor(config.av.colorformat)
 			elif port == "YPbPr":
-				self.setYUVColor(config.av.colorformat_yuv)
+				self.setYUVColor(config.av.colorformat)
 			elif port == "Scart":
 				map = {"cvbs": 0, "rgb": 1, "svideo": 2, "yuv": 3}
 				from enigma import eAVSwitch
