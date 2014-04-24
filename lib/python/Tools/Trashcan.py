@@ -10,9 +10,9 @@ import enigma
 def getTrashFolder(path=None):
 	# Returns trash folder without symlinks
 	try:
-		print 'PATH:',path
 		if path is None or os.path.realpath(path) == '/media/autofs':
 			print 'path is none'
+			return ""
 		else:
 			if '/movie' in path:
 				mountpoint = Harddisk.findMountPoint(os.path.realpath(path))
@@ -25,20 +25,20 @@ def getTrashFolder(path=None):
 
 def createTrashFolder(path=None):
 	trash = getTrashFolder(path)
-	if not os.path.isdir(trash):
+	if trash and not os.path.isdir(trash):
 		os.mkdir(trash)
 	return trash
 
 def get_size(start_path = '.'):
 	total_size = 0
-	print 'start_path:',start_path
-	for dirpath, dirnames, filenames in os.walk(start_path):
-		for f in filenames:
-			try:
-				fp = os.path.join(dirpath, f)
-				total_size += os.path.getsize(fp)
-			except:
-				pass
+	if start_path:
+		for dirpath, dirnames, filenames in os.walk(start_path):
+			for f in filenames:
+				try:
+					fp = os.path.join(dirpath, f)
+					total_size += os.path.getsize(fp)
+				except:
+					pass
 	return total_size
 
 class Trashcan:
@@ -193,8 +193,7 @@ class TrashInfo(VariableText, GUIComponent):
 		GUIComponent.__init__(self)
 		VariableText.__init__(self)
 		self.type = type
-		print '[TrashInfo]',path
-		if update and path != '/media/autofs':
+		if update and path != '/media/autofs/':
 			self.update(path)
 
 	def update(self, path):

@@ -142,11 +142,11 @@ class AVSwitch:
 		if mode_60 is None or force == 50:
 			mode_60 = mode_50
 
-		if os.path.exists('/proc/stb/video/videomode_50hz') and getBrandOEM() != 'gigablue':
+		if os.path.exists('/proc/stb/video/videomode_50hz') and getBoxType() not in ('gb800solo', 'gb800se', 'gb800ue'):
 			f = open("/proc/stb/video/videomode_50hz", "w")
 			f.write(mode_50)
 			f.close()
-		if os.path.exists('/proc/stb/video/videomode_60hz') and getBrandOEM() != 'gigablue':
+		if os.path.exists('/proc/stb/video/videomode_60hz') and getBoxType() not in ('gb800solo', 'gb800se', 'gb800ue'):
 			f = open("/proc/stb/video/videomode_60hz", "w")
 			f.write(mode_60)
 			f.close()
@@ -546,6 +546,26 @@ def InitAVSwitch():
 		config.av.downmix_aac = ConfigYesNo(default = True)
 		config.av.downmix_aac.addNotifier(setAACDownmix)
 
+	if os.path.exists("/proc/stb/audio/aac_transcode_choices"):
+		f = open("/proc/stb/audio/aac_transcode_choices", "r")
+		can_aactranscode = f.read().strip().split(" ")
+		f.close()
+	else:
+		can_aactranscode = False
+
+	SystemInfo["CanAACTranscode"] = can_aactranscode
+
+	if can_aactranscode:
+		def setAACTranscode(configElement):
+			f = open("/proc/stb/audio/aac_transcode", "w")
+			f.write(configElement.value)
+			f.close()
+		choice_list = [("off", _("off")), ("ac3", _("AC3")), ("dts", _("DTS"))]
+		config.av.transcodeaac = ConfigSelection(choices = choice_list, default = "off")
+		config.av.transcodeaac.addNotifier(setAACTranscode)
+	else:
+		config.av.transcodeaac = ConfigNothing()
+
 	if os.path.exists("/proc/stb/vmpeg/0/pep_scaler_sharpness"):
 		def setScaler_sharpness(config):
 			myval = int(config.value)
@@ -560,7 +580,7 @@ def InitAVSwitch():
 			except IOError:
 				print "couldn't write pep_scaler_sharpness"
 
-		if getBoxType() == 'gbquad':
+		if getBoxType() in ('gbquad', 'gbquadplus'):
 			config.av.scaler_sharpness = ConfigSlider(default=5, limits=(0,26))
 		else:
 			config.av.scaler_sharpness = ConfigSlider(default=13, limits=(0,26))

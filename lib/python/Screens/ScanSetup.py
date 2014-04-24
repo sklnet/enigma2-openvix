@@ -400,10 +400,13 @@ class ScanSetup(ConfigListScreen, Screen, CableTransponderSearchSupport):
 			self.list.append(self.typeOfScanEntry)
 		elif nim.isCompatible("DVB-T"):
 			self.typeOfScanEntry = getConfigListEntry(_("Type of scan"), self.scan_typeterrestrial)
-			self.typeOfInputEntry = getConfigListEntry(_("Use frequency or channel"), self.scan_input_as)
 			self.list.append(self.typeOfScanEntry)
-			if self.ter_channel_input:
-				self.list.append(self.typeOfInputEntry)
+			if self.scan_typeterrestrial.value == "single_transponder":
+				self.typeOfInputEntry = getConfigListEntry(_("Use frequency or channel"), self.scan_input_as)
+				if self.ter_channel_input:
+					self.list.append(self.typeOfInputEntry)
+				else:
+					self.scan_input_as.value = self.scan_input_as.choices[0]
 
 		self.scan_networkScan.value = False
 		if nim.isCompatible("DVB-S"):
@@ -470,7 +473,8 @@ class ScanSetup(ConfigListScreen, Screen, CableTransponderSearchSupport):
 					self.scan_ter.system.value = eDVBFrontendParametersTerrestrial.System_DVB_T
 				if self.ter_channel_input and self.scan_input_as.value == "channel":
 					channel = channelnumbers.getChannelNumber(self.scan_ter.frequency.value*1000, self.ter_tnumber)
-					self.scan_ter.channel.value = int(channel.replace("+","").replace("-",""))
+					if channel:
+						self.scan_ter.channel.value = int(channel.replace("+","").replace("-",""))
 					self.list.append(getConfigListEntry(_("Channel"), self.scan_ter.channel))
 				else:
 					self.scan_ter.frequency.value = channelnumbers.channel2frequency(self.scan_ter.channel.value, self.ter_tnumber)/1000
@@ -598,7 +602,7 @@ class ScanSetup(ConfigListScreen, Screen, CableTransponderSearchSupport):
 		for slot in nimmanager.nim_slots:
 			if slot.isCompatible("DVB-T"):
 				self.ter_tnumber = slot.slot
-		if self.ter_tnumber:
+		if self.ter_tnumber is not None:
 			self.ter_channel_input = channelnumbers.supportedChannels(self.ter_tnumber)
 
 		# status
